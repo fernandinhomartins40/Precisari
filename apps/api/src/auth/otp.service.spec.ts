@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { checkOtp, hashOtp, maskEmail, otpEmail } from './otp.service';
+import { otpEmail } from '../integrations/email/templates';
+import { checkOtp, hashOtp, maskEmail } from './otp.service';
 
 const now = new Date('2026-11-09T12:00:00Z');
 const secret = 'test-secret';
@@ -32,7 +33,7 @@ describe('OTP', () => {
   });
 
   it('builds a pt-BR email with the code and TTL', () => {
-    const msg = otpEmail('042137', 10);
+    const msg = otpEmail('carla@precisari.dev', '042137', 10);
     expect(msg.subject).toContain('042137');
     expect(msg.text).toContain('042137');
     expect(msg.text).toContain('10 minutos');

@@ -19,6 +19,12 @@ import { PrismaModule } from './prisma/prisma.module';
 import { PropertiesModule } from './properties/properties.module';
 import { RecommendationsModule } from './recommendations/recommendations.module';
 import { UsersModule } from './users/users.module';
+import { PlacesModule } from './places/places.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { ExplanationsModule } from './explanations/explanations.module';
+import { DataModule } from './data/data.module';
+import { AdminModule } from './admin/admin.module';
+import { BillingModule } from './billing/billing.module';
 
 @Module({
   imports: [
@@ -51,6 +57,12 @@ import { UsersModule } from './users/users.module';
     NightsModule,
     InsightsModule,
     DevicesModule,
+    PlacesModule,
+    NotificationsModule,
+    ExplanationsModule,
+    DataModule,
+    AdminModule,
+    BillingModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: UserThrottlerGuard }],

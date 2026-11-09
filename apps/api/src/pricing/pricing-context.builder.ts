@@ -57,6 +57,8 @@ export class PricingContextBuilder {
       }),
       this.prisma.event.findMany({
         where: {
+          // Only curated (verified) events affect prices.
+          verified: true,
           startDate: { lte: padTo },
           endDate: { gte: isoToDate(today) },
           lat: { gte: box.minLat, lte: box.maxLat },

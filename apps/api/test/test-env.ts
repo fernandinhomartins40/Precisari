@@ -22,6 +22,11 @@ export function applyTestEnv(): void {
     ADMIN_EMAILS: 'admin@precisari.dev',
     HOLIDAYS_PROVIDER: 'fake',
     WEATHER_PROVIDER: 'fake',
+    DATA_SEED_ON_BOOT: 'false',
+    EMAIL_PROVIDER: 'fake',
+    GEO_PROVIDER: 'fake',
+    LLM_PROVIDER: 'fake',
+    PUSH_PROVIDER: 'fake',
   };
   for (const [k, v] of Object.entries(defaults)) process.env[k] ??= v;
   process.env.NODE_ENV = 'test';

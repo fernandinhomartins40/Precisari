@@ -19,7 +19,7 @@ describe('auth flow (integration)', () => {
     await request(ctx.http).post('/v1/auth/otp/request').send({ email: ' Carla@Precisari.dev ' }).expect(204);
     expect(ctx.emails.sent).toHaveLength(1);
     expect(ctx.emails.sent[0]?.to).toBe(email);
-    expect(ctx.emails.sent[0]?.text).toMatch(/Seu código para entrar no Precisari é: \d{6}/);
+    expect(ctx.emails.sent[0]?.text).toMatch(/Seu código para entrar no Precisari é \d{6}/);
 
     const stored = await ctx.prisma.otpCode.findFirstOrThrow({ where: { email } });
     expect(stored.codeHash).not.toContain(ctx.emails.lastCodeFor(email));

@@ -4,6 +4,7 @@ import { AppError } from '../common/app-error';
 import { hmacSha256, randomOtpCode, safeEqual } from '../common/crypto';
 import { ENV } from '../config/config.module';
 import type { Env } from '../config/env';
+import { otpEmail } from '../integrations/email/templates';
 import { EMAIL_SENDER, type EmailSender } from '../integrations/ports';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -26,22 +27,6 @@ export function checkOtp(
   if (record.attempts >= maxAttempts) return 'too_many_attempts';
   if (record.expiresAt.getTime() <= now.getTime()) return 'expired';
   return safeEqual(record.codeHash, candidateHash) ? 'ok' : 'invalid';
-}
-
-export function otpEmail(code: string, ttlMinutes: number): { subject: string; text: string } {
-  return {
-    subject: `Seu código de acesso: ${code}`,
-    text: [
-      'Olá!',
-      '',
-      `Seu código para entrar no Precisari é: ${code}`,
-      '',
-      `Ele vale por ${ttlMinutes} minutos e só pode ser usado uma vez.`,
-      'Se você não pediu este código, pode ignorar este e-mail com tranquilidade.',
-      '',
-      'Equipe Precisari',
-    ].join('\n'),
-  };
 }
 
 @Injectable()
@@ -74,9 +59,8 @@ export class OtpService {
         data: { email, codeHash: hashOtp(this.secret, email, code), expiresAt: new Date(now.getTime() + this.env.OTP_TTL_SECONDS * 1000) },
       }),
     ]);
-    const msg = otpEmail(code, Math.round(this.env.OTP_TTL_SECONDS / 60));
     try {
-      await this.email.send({ to: email, ...msg });
+      await this.email.send(otpEmail(email, code, Math.round(this.env.OTP_TTL_SECONDS / 60)));
     } catch (err) {
       this.logger.error({ err, email: maskEmail(email) }, 'otp email failed');
     }

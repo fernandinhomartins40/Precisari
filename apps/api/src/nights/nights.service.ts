@@ -83,7 +83,7 @@ export class NightsService {
         orderBy: { fetchedAt: 'desc' },
       }),
       this.prisma.event.findMany({
-        where: { startDate: { lte: day }, endDate: { gte: day }, lat: { gte: box.minLat, lte: box.maxLat }, lng: { gte: box.minLng, lte: box.maxLng } },
+        where: { verified: true, startDate: { lte: day }, endDate: { gte: day }, lat: { gte: box.minLat, lte: box.maxLat }, lng: { gte: box.minLng, lte: box.maxLng } },
       }),
       this.prisma.holiday.findMany({
         where: {
