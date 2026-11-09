@@ -60,12 +60,14 @@ export function generateActionPlans(input: GenerateInput): ActionPlan[] {
     const current = input.currentPrice(rec.date);
     const factors = rec.factors;
 
+    const target = discountedPrice(rec, input.minPrice, input.maxPrice);
     if (rec.isOrphan) {
-      const to = discountedPrice(rec, input.minPrice, input.maxPrice);
-      if (to !== current) plans.push({ date: rec.date, type: 'ORPHAN', fromValue: current, toValue: to, estimatedGain: estimateGain(current, to), factors });
-    } else if (rec.discountPct && rec.discountPct > 0) {
-      const to = discountedPrice(rec, input.minPrice, input.maxPrice);
-      if (to !== current) plans.push({ date: rec.date, type: 'ADJACENT', fromValue: current, toValue: to, estimatedGain: estimateGain(current, to), factors });
+      // New rule (RF-40): always worth a card when the price differs, whatever the threshold.
+      if (target !== current) plans.push({ date: rec.date, type: 'ORPHAN', fromValue: current, toValue: target, estimatedGain: estimateGain(current, target), factors });
+    } else if (rec.discountPct && rec.discountPct > 0 && target < current) {
+      // Adjacent discount only makes sense as a decrease versus the current known price; otherwise the
+      // night falls through to the regular PRICE rule below.
+      plans.push({ date: rec.date, type: 'ADJACENT', fromValue: current, toValue: target, estimatedGain: estimateGain(current, target), factors });
     } else if (current > 0 && Math.abs(rec.suggestedPrice - current) / current > PRICE_CHANGE_THRESHOLD) {
       plans.push({
         date: rec.date,

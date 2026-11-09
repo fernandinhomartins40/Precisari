@@ -46,6 +46,9 @@ describe('insights math', () => {
   it('normalizes a 90-day baseline to a month', () => {
     const t = normalizeTotals({ days: 90, nightsAvailable: 90, nightsBooked: 45, revenue: 900000, stays: 15 }, 30);
     expect(t).toEqual({ days: 30, nightsAvailable: 30, nightsBooked: 15, revenue: 300000, stays: 5 });
+    // ADR is preserved despite rounding of the night count (17 × 30/90 = 5.67 → 6 nights).
+    const r = normalizeTotals({ days: 90, nightsAvailable: 90, nightsBooked: 17, revenue: 17 * 24900, stays: 6 }, 30);
+    expect(r.revenue / r.nightsBooked).toBe(24900);
   });
 
   it('approval rate', () => {

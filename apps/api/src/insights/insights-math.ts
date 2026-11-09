@@ -77,11 +77,14 @@ export function toMonthMetrics(month: string, t: WindowTotals, costs: CostInput,
 /** Scales window totals to a month of `monthDays` days (baseline = 90 days before signup, RF-61). */
 export function normalizeTotals(t: WindowTotals, monthDays: number): WindowTotals {
   const f = t.days > 0 ? monthDays / t.days : 0;
+  const nightsBooked = Math.round(t.nightsBooked * f);
+  // Revenue follows the rounded night count so the normalized ADR equals the window's ADR.
+  const adr = t.nightsBooked > 0 ? t.revenue / t.nightsBooked : 0;
   return {
     days: monthDays,
     nightsAvailable: Math.round(t.nightsAvailable * f),
-    nightsBooked: Math.round(t.nightsBooked * f),
-    revenue: Math.round(t.revenue * f),
+    nightsBooked,
+    revenue: Math.round(nightsBooked * adr),
     stays: Math.round(t.stays * f),
   };
 }

@@ -56,7 +56,7 @@ export const EnvSchema = z.object({
   ICAL_FETCH_TIMEOUT_MS: z.coerce.number().int().positive().default(10000),
   ICAL_MAX_BYTES: z.coerce.number().int().positive().default(2_000_000),
   /** Allow iCal URLs that resolve to private/loopback IPs. Unset ⇒ allowed outside production only. */
-  ICAL_ALLOW_PRIVATE_HOSTS: z.enum(['true', 'false']).optional(),
+  ICAL_ALLOW_PRIVATE_HOSTS: z.preprocess((v) => (v === '' ? undefined : v), z.enum(['true', 'false']).optional()),
   /** Consecutive sync failures before a calendar is marked ERROR (RF-22). */
   ICAL_ERROR_THRESHOLD: z.coerce.number().int().positive().default(3),
 });

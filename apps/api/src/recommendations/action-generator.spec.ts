@@ -54,6 +54,12 @@ describe('generateActionPlans', () => {
     expect(plans[0]?.toValue).toBe(22900);
   });
 
+  it('an adjacent night priced above the current price is a regular PRICE action', () => {
+    const plans = generateActionPlans({ ...base, recommendations: [rec({ date: '2026-12-31', suggestedPrice: 44900, discountPct: 7 })] });
+    expect(plans.map((p) => [p.type, p.toValue])).toEqual([['PRICE', 44900]]);
+    expect(generateActionPlans({ ...base, recommendations: [rec({ date: '2026-12-30', suggestedPrice: 25500, discountPct: 7 })] })).toEqual([]);
+  });
+
   it('creates MIN_STAY when the engine minimum stay differs from the known one', () => {
     const plans = generateActionPlans({
       ...base,

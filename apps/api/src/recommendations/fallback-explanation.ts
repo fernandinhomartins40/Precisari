@@ -44,7 +44,10 @@ export function fallbackExplanation(input: {
     case 'ORPHAN':
       return {
         headline: `${day}: noite solta entre reservas`,
-        explanation: `Essa noite ficou isolada entre duas reservas. Baixar de ${from} para ${to} aumenta a chance de vendê-la.${because}`,
+        explanation:
+          input.toValue < input.fromValue
+            ? `Essa noite ficou isolada entre duas reservas. Baixar de ${from} para ${to} aumenta a chance de vendê-la.${because}`
+            : `Essa noite ficou isolada entre duas reservas e ainda tem procura: cobre ${to} em vez de ${from}.${because}`,
       };
     case 'ADJACENT':
       return {
