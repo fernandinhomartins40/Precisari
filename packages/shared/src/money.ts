@@ -7,7 +7,7 @@ export function formatBRL(cents: number, opts: { whole?: boolean; signed?: boole
     minimumFractionDigits: opts.whole ? 0 : 2,
     maximumFractionDigits: opts.whole ? 0 : 2,
   }).format(Math.abs(value));
-  const sign = value < 0 ? '−' : opts.signed && value > 0 ? '+' : '';
+  const sign = value < 0 ? '\u2212' : opts.signed && value > 0 ? '+' : '';
   return `${sign}${s}`.replace(/ /g, ' ');
 }
 
