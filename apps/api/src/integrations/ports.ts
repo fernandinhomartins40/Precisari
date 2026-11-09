@@ -4,22 +4,32 @@
  */
 import type { DestinationType, EventSize, PaymentMethod, Plan, BillingCycle, BillingWebhookEvent } from '@precisari/shared';
 
+// ---------- Common: adapter metadata for /admin/health ----------
+export interface HealthStatus { ok: boolean; detail: string | null }
+/** Every adapter exposes its provider name and, when cheap, a health check. Optional so ad-hoc test doubles stay valid. */
+export interface IntegrationAdapter {
+  /** Provider id, e.g. 'resend', 'brasilapi', 'fake'. */
+  readonly provider?: string;
+  /** Cheap reachability/config check (no paid calls). */
+  healthCheck?(): Promise<HealthStatus>;
+}
+
 // ---------- Email (Resend) ----------
 export const EMAIL_SENDER = Symbol('EMAIL_SENDER');
 export interface EmailMessage { to: string; subject: string; text: string; html?: string }
-export interface EmailSender { send(msg: EmailMessage): Promise<void> }
+export interface EmailSender extends IntegrationAdapter { send(msg: EmailMessage): Promise<void> }
 
 // ---------- Holidays (BrasilAPI) ----------
 export const HOLIDAYS_PROVIDER = Symbol('HOLIDAYS_PROVIDER');
 export interface NationalHoliday { date: string; name: string; type: string }
-export interface HolidaysProvider { nationalHolidays(year: number): Promise<NationalHoliday[]> }
+export interface HolidaysProvider extends IntegrationAdapter { nationalHolidays(year: number): Promise<NationalHoliday[]> }
 
 // ---------- Weather (Open-Meteo) ----------
 export const WEATHER_PROVIDER = Symbol('WEATHER_PROVIDER');
 export interface DailyForecast { date: string; precipProb: number; precipMm: number | null; tempMin: number; tempMax: number }
-export interface WeatherProvider {
-  /** Daily forecast D-0..D-(days-1); may include `pastDays` before today. */
-  forecast(lat: number, lng: number, opts?: { days?: number; pastDays?: number }): Promise<DailyForecast[]>;
+export interface WeatherProvider extends IntegrationAdapter {
+  /** Daily forecast D-0..D-(days-1); may include `pastDays` before today. Dates are local to `timezone`. */
+  forecast(lat: number, lng: number, opts?: { days?: number; pastDays?: number; timezone?: string }): Promise<DailyForecast[]>;
 }
 
 // ---------- Geo (Google Places) ----------
@@ -29,7 +39,7 @@ export interface PlaceDetails {
   placeId: string; address: string; lat: number; lng: number; city: string; state: string; ibgeCode: string | null;
   suggestedDestinationType: DestinationType;
 }
-export interface GeoProvider {
+export interface GeoProvider extends IntegrationAdapter {
   autocomplete(query: string, sessionToken?: string): Promise<PlaceSuggestion[]>;
   details(placeId: string): Promise<PlaceDetails>;
 }
@@ -44,7 +54,7 @@ export interface ExplanationInput {
 export interface ExplanationOutput { headline: string; text: string }
 export interface EventClassificationInput { name: string; description?: string; city: string; venue?: string }
 export interface EventClassificationOutput { size: EventSize; radiusKm: number; confidence: number }
-export interface LlmProvider {
+export interface LlmProvider extends IntegrationAdapter {
   readonly model: string;
   explain(input: ExplanationInput): Promise<ExplanationOutput>;
   classifyEvent(input: EventClassificationInput): Promise<EventClassificationOutput>;
@@ -54,7 +64,7 @@ export interface LlmProvider {
 export const PUSH_PROVIDER = Symbol('PUSH_PROVIDER');
 export interface PushMessage { to: string; title: string; body: string; data?: Record<string, unknown> }
 export interface PushResult { token: string; ok: boolean; error?: 'DeviceNotRegistered' | string }
-export interface PushProvider { send(messages: PushMessage[]): Promise<PushResult[]> }
+export interface PushProvider extends IntegrationAdapter { send(messages: PushMessage[]): Promise<PushResult[]> }
 
 // ---------- Billing (gateway TBD) ----------
 export const BILLING_PROVIDER = Symbol('BILLING_PROVIDER');
@@ -66,7 +76,7 @@ export interface CheckoutResult {
   checkoutId: string; providerRef: string; status: 'PENDING' | 'PAID'; redirectUrl: string | null;
   pixQrCode: string | null; pixCopyPaste: string | null; boletoUrl: string | null; expiresAt: string | null;
 }
-export interface BillingProvider {
+export interface BillingProvider extends IntegrationAdapter {
   readonly name: string;
   createCheckout(input: CreateCheckoutInput): Promise<CheckoutResult>;
   /** Verify signature and normalize the payload. Throws on invalid signature. */
@@ -77,7 +87,7 @@ export interface BillingProvider {
 // ---------- Channel manager (Channex, phase 2) ----------
 export const CHANNEX_PROVIDER = Symbol('CHANNEX_PROVIDER');
 export interface ChannexRate { date: string; priceCents: number; minStay: number }
-export interface ChannexProvider {
+export interface ChannexProvider extends IntegrationAdapter {
   connectProperty(input: { propertyId: string; title: string; currency: 'BRL'; timezone: string }): Promise<{ channexPropertyId: string }>;
   pushRates(channexPropertyId: string, rates: ChannexRate[]): Promise<void>;
 }
