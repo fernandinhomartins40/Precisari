@@ -182,7 +182,12 @@ export class AsaasBillingProvider implements BillingProvider {
   }
 
   async cancel(providerRef: string): Promise<void> {
-    await this.request(`/subscriptions/${providerRef}`, Deleted, { method: 'DELETE' });
+    try {
+      await this.request(`/subscriptions/${providerRef}`, Deleted, { method: 'DELETE' });
+    } catch (err) {
+      // Already gone: exactly what was asked, and it must not block an account deletion.
+      if (!(err instanceof IntegrationError && err.status === 404)) throw err;
+    }
   }
 
   async healthCheck(): Promise<HealthStatus> {

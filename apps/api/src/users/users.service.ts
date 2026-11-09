@@ -1,7 +1,11 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ErrorCode, type UpdateMeBody, type UserDto } from '@precisari/shared';
 import { AppError } from '../common/app-error';
 import { AuditService } from '../common/audit.service';
+import { toAppError } from '../integrations/common/errors';
+import { BILLING_PROVIDER, type BillingProvider } from '../integrations/ports';
+import { JobsRegistry } from '../jobs/jobs.registry';
+import { QUEUES } from '../jobs/queues';
 import { PrismaService } from '../prisma/prisma.service';
 import { toUserDto, type UserWithSubscription } from './user.mapper';
 
@@ -14,12 +18,29 @@ function isValidTimezone(tz: string): boolean {
   }
 }
 
+const DAY_MS = 86_400_000;
+
 @Injectable()
-export class UsersService {
+export class UsersService implements OnModuleInit {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly registry: JobsRegistry,
+    @Inject(BILLING_PROVIDER) private readonly billing: BillingProvider,
   ) {}
+
+  onModuleInit(): void {
+    this.registry.register(QUEUES.retentionPurge, () => this.purgeExpired(), { pattern: '30 3 * * *', tz: 'America/Sao_Paulo' });
+  }
+
+  /** Retention promised in the privacy policy: login codes hold e-mails and Pix responses hold payment data. */
+  async purgeExpired(now = new Date()): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.otpCode.deleteMany({ where: { expiresAt: { lt: new Date(now.getTime() - DAY_MS) } } }),
+      this.prisma.refreshToken.deleteMany({ where: { expiresAt: { lt: now } } }),
+      this.prisma.idempotencyKey.deleteMany({ where: { createdAt: { lt: new Date(now.getTime() - 30 * DAY_MS) } } }),
+    ]);
+  }
 
   private async active(userId: string): Promise<UserWithSubscription> {
     const user = await this.prisma.user.findFirst({ where: { id: userId, deletedAt: null }, include: { subscription: true } });
@@ -43,12 +64,22 @@ export class UsersService {
   /**
    * LGPD account deletion (RF-03): revokes sessions, deletes properties (cascade: calendars, bookings,
    * nights, actions), devices and pending OTPs, anonymizes the user row (kept soft-deleted for the audit
-   * trail and billing reconciliation) and revokes consents.
+   * trail and billing reconciliation) and revokes consents. The gateway subscription is canceled first: if
+   * that fails nothing is deleted and the user can retry, because a deleted account must never keep being charged.
    */
   async delete(userId: string): Promise<void> {
     const user = await this.active(userId);
+    const sub = user.subscription;
+    if (sub?.providerRef && sub.provider === this.billing.name) {
+      try {
+        await this.billing.cancel(sub.providerRef);
+      } catch (err) {
+        throw toAppError(err);
+      }
+    }
     const now = new Date();
     await this.prisma.$transaction([
+      ...(sub ? [this.prisma.subscription.update({ where: { id: sub.id }, data: { status: 'CANCELED' as const } })] : []),
       this.prisma.refreshToken.deleteMany({ where: { userId } }),
       this.prisma.deviceToken.deleteMany({ where: { userId } }),
       this.prisma.property.deleteMany({ where: { userId } }),

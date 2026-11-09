@@ -116,6 +116,8 @@ describe('Asaas billing adapter', () => {
     const { fetchFn, calls } = mockFetch(json({ deleted: true, id: 'sub_1' }));
     await provider(fetchFn).cancel('sub_1');
     expect(calls[0]).toMatchObject({ method: 'DELETE', url: 'https://asaas.test/v3/subscriptions/sub_1' });
+    await expect(provider(mockFetch(json({ errors: [] }, 404)).fetchFn).cancel('sub_gone')).resolves.toBeUndefined();
+    await expect(provider(mockFetch(json({}, 503)).fetchFn).cancel('sub_1')).rejects.toMatchObject({ status: 503 });
     expect(ASAAS_WEBHOOK_EVENTS).toEqual(expect.arrayContaining(['PAYMENT_CONFIRMED', 'PAYMENT_RECEIVED', 'SUBSCRIPTION_DELETED']));
   });
 

@@ -34,7 +34,7 @@ import { BillingModule } from './billing/billing.module';
       useFactory: (env: Env) => ({
         pinoHttp: {
           level: env.LOG_LEVEL,
-          redact: ['req.headers.authorization', 'req.headers.cookie', 'req.body.refreshToken', 'req.body.code'],
+          redact: ['req.headers.authorization', 'req.headers.cookie', 'req.headers["asaas-access-token"]', 'req.headers["x-precisari-signature"]', 'req.body.refreshToken', 'req.body.code'],
           autoLogging: { ignore: (req) => (req.url ?? '').includes('/health') },
           ...(env.NODE_ENV === 'development' ? { transport: { target: 'pino-pretty', options: { singleLine: true, translateTime: 'SYS:HH:MM:ss' } } } : {}),
         },

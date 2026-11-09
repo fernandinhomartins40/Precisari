@@ -4,6 +4,8 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { User } from '@prisma/client';
 import { PlanDto } from '@precisari/shared';
 import { BillingModule } from '../../src/billing/billing.module';
+import { IntegrationError } from '../../src/integrations/common/http';
+import { UsersModule } from '../../src/users/users.module';
 import { signFakeWebhook } from '../../src/integrations/billing/fake-billing.adapter';
 import { createProperty, createTestApp, createUser, resetDb, tokenFor, type TestApp } from './helpers';
 
@@ -22,7 +24,7 @@ describe('Billing API (RF-70/71/72)', () => {
   }
 
   beforeAll(async () => {
-    t = await createTestApp([BillingModule]);
+    t = await createTestApp([BillingModule, UsersModule]);
   });
   afterAll(async () => t.close());
   beforeEach(async () => {
@@ -58,6 +60,27 @@ describe('Billing API (RF-70/71/72)', () => {
     expect(t.fakes.billing.canceled).toEqual([providerRef]);
     const replaced = await t.prisma.subscription.findUniqueOrThrow({ where: { userId: user.id } });
     expect(replaced.providerRef).not.toBe(providerRef);
+  });
+
+  it('account deletion cancels the gateway subscription, and aborts if it cannot', async () => {
+    const auth = { Authorization: `Bearer ${token}` };
+    await http().post('/v1/billing/checkout').set(auth).send(checkoutBody);
+    const { providerRef } = await t.prisma.subscription.findUniqueOrThrow({ where: { userId: user.id } });
+    t.fakes.billing.canceled.length = 0;
+
+    const realCancel = t.fakes.billing.cancel;
+    t.fakes.billing.cancel = async () => {
+      throw new IntegrationError('billing', 'down', 503);
+    };
+    expect((await http().delete('/v1/me').set(auth)).status).toBe(502);
+    t.fakes.billing.cancel = realCancel;
+    const kept = await t.prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+    expect(kept.deletedAt).toBeNull();
+
+    expect((await http().delete('/v1/me').set(auth)).status).toBe(204);
+    expect(t.fakes.billing.canceled).toEqual([providerRef]);
+    const sub = await t.prisma.subscription.findUniqueOrThrow({ where: { userId: user.id } });
+    expect(sub.status).toBe('CANCELED');
   });
 
   it('checkout requires auth and validates the body', async () => {

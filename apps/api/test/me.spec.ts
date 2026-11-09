@@ -1,6 +1,7 @@
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { UserDto } from '@precisari/shared';
+import { UsersService } from '../src/users/users.service';
 import { bearer, createTestApp, login, propertyBody, resetDb, type TestContext } from './helpers';
 
 describe('/me (integration)', () => {
@@ -31,6 +32,29 @@ describe('/me (integration)', () => {
     expect(json).not.toContain('codeHash');
     expect(json).not.toContain('tokenHash');
     expect(json).not.toContain('urlEncrypted');
+  });
+
+  it('purges old login codes, expired sessions and old idempotency records, and keeps recent ones', async () => {
+    const s = await login(ctx, 'carla@precisari.dev');
+    const now = new Date();
+    const ago = (days: number) => new Date(now.getTime() - days * 86_400_000);
+    await ctx.prisma.otpCode.createMany({
+      data: [
+        { email: 'old@x.com', codeHash: 'a', expiresAt: ago(2) },
+        { email: 'new@x.com', codeHash: 'b', expiresAt: now },
+      ],
+    });
+    await ctx.prisma.idempotencyKey.createMany({
+      data: [
+        { key: 'old', userId: s.user.id, route: '/r', statusCode: 201, response: {}, createdAt: ago(31) },
+        { key: 'new', userId: s.user.id, route: '/r', statusCode: 201, response: {}, createdAt: ago(1) },
+      ],
+    });
+    await ctx.app.get(UsersService).purgeExpired(now);
+    expect(await ctx.prisma.otpCode.count({ where: { email: 'old@x.com' } })).toBe(0);
+    expect(await ctx.prisma.otpCode.count({ where: { email: 'new@x.com' } })).toBe(1);
+    expect((await ctx.prisma.idempotencyKey.findMany()).map((k) => k.key)).toEqual(['new']);
+    await request(ctx.http).post('/v1/auth/refresh').send({ refreshToken: s.refreshToken }).expect(200);
   });
 
   it('DELETE /me anonymizes the user, deletes data and revokes sessions (LGPD)', async () => {
