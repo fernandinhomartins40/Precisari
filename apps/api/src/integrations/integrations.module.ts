@@ -8,6 +8,7 @@ import {
 } from './ports';
 import { ResendEmailSender } from './email/resend.adapter';
 import { FakeEmailSender } from './email/email.fake';
+import { VelomailEmailSender } from './email/velomail.adapter';
 import { BrasilApiHolidaysProvider } from './holidays/brasilapi.adapter';
 import { FakeHolidaysProvider } from './holidays/holidays.fake';
 import { OpenMeteoWeatherProvider } from './weather/open-meteo.adapter';
@@ -36,10 +37,14 @@ function requireKey<T>(env: Env, integration: string, key: string, real: () => T
 
 /** Env-based adapter selection. Exported for tests. */
 export const adapterFactories = {
-  email: (env: Env): EmailSender =>
-    env.EMAIL_PROVIDER === 'resend'
+  email: (env: Env): EmailSender => {
+    if (env.EMAIL_PROVIDER === 'velomail') {
+      return requireKey<EmailSender>(env, 'email', env.VELOMAIL_API_KEY, () => new VelomailEmailSender(env.VELOMAIL_API_KEY, env.EMAIL_FROM, env.VELOMAIL_BASE_URL), () => new FakeEmailSender());
+    }
+    return env.EMAIL_PROVIDER === 'resend'
       ? requireKey<EmailSender>(env, 'email', env.RESEND_API_KEY, () => new ResendEmailSender(env.RESEND_API_KEY, env.EMAIL_FROM), () => new FakeEmailSender())
-      : new FakeEmailSender(),
+      : new FakeEmailSender();
+  },
   holidays: (env: Env): HolidaysProvider =>
     env.HOLIDAYS_PROVIDER === 'brasilapi' ? new BrasilApiHolidaysProvider(env.BRASILAPI_BASE_URL) : new FakeHolidaysProvider(),
   weather: (env: Env): WeatherProvider =>

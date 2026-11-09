@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ResendEmailSender } from '../../src/integrations/email/resend.adapter';
+import { splitFrom, VelomailEmailSender } from '../../src/integrations/email/velomail.adapter';
 import { icalBrokenEmail, otpEmail, weeklySummaryEmail } from '../../src/integrations/email/templates';
 import { BrasilApiHolidaysProvider } from '../../src/integrations/holidays/brasilapi.adapter';
 import { FakeHolidaysProvider } from '../../src/integrations/holidays/holidays.fake';
@@ -16,6 +17,33 @@ import { easterSunday, localDateHour } from '../../src/integrations/common/text'
 import { adapterFactories } from '../../src/integrations/integrations.module';
 import { loadEnv } from '../../src/config/env';
 import { json, mockFetch } from './mock-fetch';
+
+describe('VeloMail email adapter', () => {
+  it('posts with x-api-key and splits the sender into address and name', async () => {
+    const { fetchFn, calls } = mockFetch(json({ message_id: 'm_1' }));
+    const sender = new VelomailEmailSender('re_key', 'Precisari <ola@precisari.com.br>', 'https://vm.test/api/', fetchFn);
+    await sender.send(otpEmail('ana@example.com', '123456'));
+    expect(calls[0]?.url).toBe('https://vm.test/api/emails/send');
+    expect(calls[0]?.headers['x-api-key']).toBe('re_key');
+    expect(calls[0]?.body).toMatchObject({ from: 'ola@precisari.com.br', from_name: 'Precisari', to: 'ana@example.com', subject: 'Seu código de acesso: 123456' });
+  });
+
+  it('throws IntegrationError on HTTP errors and unexpected payloads', async () => {
+    const bad = new VelomailEmailSender('k', 'a@b.c', 'https://vm.test/api', mockFetch(json({ error: 'nope' }, 403)).fetchFn);
+    await expect(bad.send({ to: 'a@b.c', subject: 's', text: 't' })).rejects.toBeInstanceOf(IntegrationError);
+    const weird = new VelomailEmailSender('k', 'a@b.c', 'https://vm.test/api', mockFetch(json({ unexpected: true })).fetchFn);
+    await expect(weird.send({ to: 'a@b.c', subject: 's', text: 't' })).rejects.toThrow(/unexpected response shape/);
+  });
+
+  it('keeps a bare address as is', () => {
+    expect(splitFrom(' ola@precisari.com.br ')).toEqual({ from: 'ola@precisari.com.br' });
+  });
+
+  it('requires its key in production', () => {
+    const env = loadEnv({ NODE_ENV: 'production', DATABASE_URL: 'x', JWT_ACCESS_SECRET: 'x'.repeat(32), EMAIL_PROVIDER: 'velomail' });
+    expect(() => adapterFactories.email(env)).toThrow(/credential missing/);
+  });
+});
 
 describe('Resend email adapter', () => {
   it('posts to the Resend API with bearer auth', async () => {
