@@ -5,7 +5,7 @@ const config: ExpoConfig = {
   name: 'Precisari',
   slug: 'precisari',
   scheme: 'precisari',
-  version: '0.1.0',
+  version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/icon.png',
   userInterfaceStyle: 'automatic',
@@ -14,11 +14,14 @@ const config: ExpoConfig = {
     bundleIdentifier: 'br.com.precisari.app',
     supportsTablet: false,
     config: { usesNonExemptEncryption: false },
+    privacyManifests: { NSPrivacyTracking: false, NSPrivacyTrackingDomains: [] },
   },
   android: {
     package: 'br.com.precisari.app',
     adaptiveIcon: { foregroundImage: './assets/adaptive-icon.png', backgroundColor: palette.ivory },
     edgeToEdgeEnabled: true,
+    // Not used by the app: each one would have to be declared and justified in the Play Console.
+    blockedPermissions: ['android.permission.RECORD_AUDIO', 'android.permission.SYSTEM_ALERT_WINDOW', 'android.permission.READ_EXTERNAL_STORAGE', 'android.permission.WRITE_EXTERNAL_STORAGE'],
   },
   web: { bundler: 'metro', output: 'single', favicon: './assets/favicon.png' },
   plugins: [

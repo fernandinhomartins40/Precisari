@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import Constants from 'expo-constants';
 import * as WebBrowser from 'expo-web-browser';
-import { Bell, Download, LogOut, Moon, Sparkles, Trash2 } from 'lucide-react-native';
+import { Bell, Download, FileText, LogOut, Moon, Shield, Trash2 } from 'lucide-react-native';
 import { t } from '@/i18n';
 import { useTheme } from '@/theme';
 import { api } from '@/lib/api';
@@ -52,8 +52,6 @@ export default function Account() {
     void getPushPermission().then(setPush);
   }, []);
 
-  const sub = me?.subscription;
-  const canUpgrade = !sub || sub.plan === 'FREE' || sub.status === 'TRIALING' || sub.status === 'EXPIRED' || sub.status === 'CANCELED';
 
   const deleteAccount = async () => {
     const first = await confirmAsync(t('account.deleteTitle'), t('account.deleteBody'), t('common.continue'), true);
@@ -145,18 +143,12 @@ export default function Account() {
                 tone={me.subscription.status === 'ACTIVE' ? 'positive' : me.subscription.status === 'PAST_DUE' ? 'danger' : 'accent'}
               />
             </View>
-            {/* Store rules: subscriptions are sold only on the web; the app just opens the browser. */}
-            <Button
-              icon={Sparkles}
-              label={canUpgrade ? t('account.subscribePro') : t('account.manage')}
-              onPress={() => void WebBrowser.openBrowserAsync(`${config.webUrl}/assinar?plano=pro`)}
-            />
-            <AppText variant="caption" color="textSecondary">
-              {t('account.subscribeHint')}
-            </AppText>
+            {/* Store rules (Apple 3.1.1): no button, price or link to buy; the plan is only displayed here. */}
           </Group>
 
           <Group title={t('account.privacy')}>
+            <Button kind="secondary" icon={Shield} label={t('account.privacyPolicy')} onPress={() => void WebBrowser.openBrowserAsync(`${config.webUrl}/privacidade`)} />
+            <Button kind="secondary" icon={FileText} label={t('account.termsOfUse')} onPress={() => void WebBrowser.openBrowserAsync(`${config.webUrl}/termos`)} />
             <Button
               kind="secondary"
               icon={Download}

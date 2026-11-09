@@ -8,11 +8,11 @@
     },
     "preview": {
       "distribution": "internal",
-      "env": { "EXPO_PUBLIC_API_MOCK": "false" }
+      "env": { "EXPO_PUBLIC_API_MOCK": "false", "EXPO_PUBLIC_API_URL": "https://api.precisari.com.br", "EXPO_PUBLIC_WEB_URL": "https://www.precisari.com.br" }
     },
     "production": {
       "autoIncrement": true,
-      "env": { "EXPO_PUBLIC_API_MOCK": "false" }
+      "env": { "EXPO_PUBLIC_API_MOCK": "false", "EXPO_PUBLIC_API_URL": "https://api.precisari.com.br", "EXPO_PUBLIC_WEB_URL": "https://www.precisari.com.br" }
     }
   },
   "submit": { "production": {} }

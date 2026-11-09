@@ -5,43 +5,13 @@ import { Mail } from 'lucide-react-native';
 import { OtpRequestBody } from '@precisari/shared';
 import { t } from '@/i18n';
 import { useTheme } from '@/theme';
-import { config } from '@/lib/config';
 import { useSession } from '@/lib/session';
+import * as WebBrowser from 'expo-web-browser';
+import { config } from '@/lib/config';
 import { Logo, Screen } from '@/components/layout';
 import { AppText, Badge, Button, TextField } from '@/components/ui';
 import heroPhoto from '../../../assets/images/studio-campeche.jpg';
 import Svg, { Polygon } from 'react-native-svg';
-
-function SocialButton({ label }: { label: string }) {
-  const { c, radii, space } = useTheme();
-  // TODO(M0): Apple / Google sign-in (expo-apple-authentication, Google ID token) → api.auth.oauth.
-  return (
-    <View
-      accessible
-      accessibilityRole="button"
-      accessibilityLabel={`${label}, ${t('common.soon')}`}
-      accessibilityState={{ disabled: true }}
-      style={{
-        minHeight: 52,
-        borderRadius: radii.control,
-        borderWidth: 1,
-        borderColor: c.border,
-        backgroundColor: c.surface,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: space[2],
-      }}
-    >
-      <AppText variant="bodyLg" weight="600" color="textSecondary">
-        {label}
-      </AppText>
-      <View>
-        <Badge label={t('common.soon')} tone="muted" />
-      </View>
-    </View>
-  );
-}
 
 export default function Welcome() {
   const { c, radii, space } = useTheme();
@@ -90,17 +60,6 @@ export default function Welcome() {
           </AppText>
         </View>
         <View style={{ gap: space[3] }}>
-          <SocialButton label={t('auth.continueApple')} />
-          <SocialButton label={t('auth.continueGoogle')} />
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[3] }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          <View style={{ flex: 1, height: 1, backgroundColor: c.border }} />
-          <AppText variant="caption" color="textSecondary">
-            {t('auth.or')}
-          </AppText>
-          <View style={{ flex: 1, height: 1, backgroundColor: c.border }} />
-        </View>
-        <View style={{ gap: space[3] }}>
           <TextField
             label={t('auth.emailLabel')}
             placeholder={t('auth.emailPlaceholder')}
@@ -120,6 +79,10 @@ export default function Welcome() {
         <AppText variant="caption" color="textSecondary" align="center">
           {t('auth.terms')}
         </AppText>
+        <View style={{ flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap', gap: space[2] }}>
+          <Button kind="ghost" small label={t('auth.termsLink')} onPress={() => void WebBrowser.openBrowserAsync(`${config.webUrl}/termos`)} />
+          <Button kind="ghost" small label={t('auth.privacyLink')} onPress={() => void WebBrowser.openBrowserAsync(`${config.webUrl}/privacidade`)} />
+        </View>
       </Screen>
     </KeyboardAvoidingView>
   );
