@@ -14,7 +14,17 @@ const config: ExpoConfig = {
     bundleIdentifier: 'br.com.precisari.app',
     supportsTablet: false,
     config: { usesNonExemptEncryption: false },
-    privacyManifests: { NSPrivacyTracking: false, NSPrivacyTrackingDomains: [] },
+    // Required-reason APIs used by React Native and Expo modules (Apple rejects uploads that omit them).
+    privacyManifests: {
+      NSPrivacyTracking: false,
+      NSPrivacyTrackingDomains: [],
+      NSPrivacyAccessedAPITypes: [
+        { NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryUserDefaults', NSPrivacyAccessedAPITypeReasons: ['CA92.1'] },
+        { NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryFileTimestamp', NSPrivacyAccessedAPITypeReasons: ['C617.1', '0A2A.1', '3B52.1'] },
+        { NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategorySystemBootTime', NSPrivacyAccessedAPITypeReasons: ['35F9.1'] },
+        { NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryDiskSpace', NSPrivacyAccessedAPITypeReasons: ['E174.1', '85F4.1'] },
+      ],
+    },
   },
   android: {
     package: 'br.com.precisari.app',

@@ -65,6 +65,15 @@ describe('auth flow (integration)', () => {
     expect(v.body.code).toBe('VALIDATION_ERROR');
   });
 
+  it('logs the store review account in with its fixed code, without e-mail', async () => {
+    await request(ctx.http).post('/v1/auth/otp/request').send({ email: 'Review@Precisari.dev' }).expect(204);
+    expect(ctx.emails.sent).toHaveLength(0);
+    await request(ctx.http).post('/v1/auth/otp/verify').send({ email: 'review@precisari.dev', code: '246810' }).expect(200);
+    // Another address cannot use the review code.
+    await request(ctx.http).post('/v1/auth/otp/request').send({ email: 'other@precisari.dev' }).expect(204);
+    await request(ctx.http).post('/v1/auth/otp/verify').send({ email: 'other@precisari.dev', code: '246810' }).expect(400);
+  });
+
   it('grants ADMIN to ADMIN_EMAILS', async () => {
     const s = await login(ctx, 'admin@precisari.dev');
     expect(s.user.role).toBe('ADMIN');

@@ -18,6 +18,9 @@ export const EnvSchema = z.object({
   OTP_TTL_SECONDS: z.coerce.number().default(600),
   OTP_MAX_ATTEMPTS: z.coerce.number().default(5),
   ADMIN_EMAILS: z.string().default(''),
+  /** App Store / Play review account: this e-mail logs in with this fixed 6-digit code and gets no e-mail. Empty ⇒ off. */
+  REVIEW_LOGIN_EMAIL: z.string().trim().toLowerCase().default(''),
+  REVIEW_LOGIN_CODE: z.string().regex(/^(\d{6})?$/, 'REVIEW_LOGIN_CODE must be 6 digits').default(''),
   JOBS_ENABLED: bool.default('true'),
   EMAIL_PROVIDER: z.enum(['fake', 'resend', 'velomail']).default('fake'),
   RESEND_API_KEY: z.string().default(''),

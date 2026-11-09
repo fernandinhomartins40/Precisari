@@ -25,7 +25,10 @@ Dados para preencher App Store Connect e Google Play Console. Confira as respost
 - [ ] Publicar a razão social, o CNPJ e o endereço na seção "Quem somos" da política (`apps/web/src/i18n/pt-BR.ts`).
 - [ ] Fazer `privacidade@precisari.com.br` receber mensagens: a política e a página de exclusão citam esse endereço.
 - [ ] Revisão jurídica dos textos de privacidade e termos.
-- [ ] Definir como os revisores entram no app: o login é só por código no e-mail, e Apple e Google exigem acesso para revisar.
+- [x] Acesso dos revisores: conta `REVIEW_LOGIN_EMAIL` entra com o código fixo `REVIEW_LOGIN_CODE` (só no `.env` da VPS; veja com `ssh digiurban-vps grep REVIEW_LOGIN /opt/precisari/.env`). Na App Store Connect (App Review Information › Sign-in) e na Play Console (Acesso ao app), informe o e-mail e escreva: "Toque em Continuar com e-mail, digite este e-mail e use o código abaixo". Apague as duas variáveis quando as lojas não precisarem mais.
+- [ ] Rodar `eas init` no `apps/mobile` para gravar o `projectId` do EAS: sem ele o app não obtém token de push nos builds de loja.
+- [ ] Ativar a busca de endereço real (`GEO_PROVIDER=google` + `GOOGLE_MAPS_API_KEY`): com o adapter falso, qualquer endereço vira um imóvel no Campeche.
+- [x] Privacy manifest do iOS com as APIs de motivo obrigatório (`app.config.ts`) e sem rastreamento.
 - [ ] Definir o enquadramento do app na regra de compras da Apple: a venda é feita só no site, e a regra de serviços multiplataforma (3.1.3(b)) cita compra dentro do app. A rejeição continua possível.
 - [ ] Confirmar a regra do Google Play para assinaturas vendidas fora do app.
 - [ ] Ativar as credenciais reais que ainda estão em adapter falso (push, IA e busca de endereço) ou informar aos revisores o que não está ativo.

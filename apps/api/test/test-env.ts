@@ -20,6 +20,8 @@ export function applyTestEnv(): void {
     RATE_LIMIT_OTP_PER_MINUTE: '100000',
     OTP_MAX_REQUESTS_PER_WINDOW: '1000',
     ADMIN_EMAILS: 'admin@precisari.dev',
+    REVIEW_LOGIN_EMAIL: 'review@precisari.dev',
+    REVIEW_LOGIN_CODE: '246810',
     HOLIDAYS_PROVIDER: 'fake',
     WEATHER_PROVIDER: 'fake',
     DATA_SEED_ON_BOOT: 'false',

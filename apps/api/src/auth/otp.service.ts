@@ -51,7 +51,8 @@ export class OtpService {
       this.logger.warn({ email: maskEmail(email) }, 'otp request limit reached; ignoring');
       return;
     }
-    const code = randomOtpCode();
+    const review = !!this.env.REVIEW_LOGIN_CODE && email === this.env.REVIEW_LOGIN_EMAIL;
+    const code = review ? this.env.REVIEW_LOGIN_CODE : randomOtpCode();
     const now = new Date();
     await this.prisma.$transaction([
       this.prisma.otpCode.updateMany({ where: { email, consumedAt: null }, data: { consumedAt: now } }),
@@ -59,6 +60,8 @@ export class OtpService {
         data: { email, codeHash: hashOtp(this.secret, email, code), expiresAt: new Date(now.getTime() + this.env.OTP_TTL_SECONDS * 1000) },
       }),
     ]);
+    // Store reviewers cannot read our inbox; the attempt and request limits above still apply.
+    if (review) return;
     try {
       await this.email.send(otpEmail(email, code, Math.round(this.env.OTP_TTL_SECONDS / 60)));
     } catch (err) {
