@@ -43,7 +43,7 @@ export class InsightsService implements OnModuleInit {
     const baselineTo = addDays(createdDate, -1);
     const loadFrom = baselineFrom < historyStart ? baselineFrom : historyStart;
 
-    const [bookings, approved, nightPrices, monthActions] = await Promise.all([
+    const [bookings, approved, monthActions] = await Promise.all([
       this.prisma.booking.findMany({
         where: { propertyId, status: { in: ['BOOKED', 'BLOCKED'] }, checkOut: { gt: isoToDate(loadFrom) }, checkIn: { lte: isoToDate(targetEnd) } },
         select: { checkIn: true, checkOut: true, status: true },
@@ -52,10 +52,6 @@ export class InsightsService implements OnModuleInit {
         where: { propertyId, status: { in: ['APPROVED', 'APPLIED'] }, type: { in: [...PRICE_FAMILY] }, date: { gte: isoToDate(historyStart), lte: isoToDate(targetEnd) } },
         orderBy: { decidedAt: 'desc' },
         select: { date: true, toValue: true },
-      }),
-      this.prisma.nightPrice.findMany({
-        where: { propertyId, date: { gte: isoToDate(historyStart), lte: isoToDate(targetEnd) } },
-        select: { date: true, suggestedPrice: true },
       }),
       this.prisma.action.findMany({
         where: { propertyId, date: { gte: isoToDate(`${target}-01`), lte: isoToDate(targetEnd) } },
@@ -68,8 +64,8 @@ export class InsightsService implements OnModuleInit {
       const d = dateToIso(a.date);
       if (!approvedPrice.has(d)) approvedPrice.set(d, a.toValue);
     }
-    const suggested = new Map(nightPrices.map((n) => [dateToIso(n.date), n.suggestedPrice]));
-    const priceFor = (d: string): number => approvedPrice.get(d) ?? suggested.get(d) ?? p.basePrice;
+    // RF-42/RF-62: a night earns the last approved price, else the base. Never the suggestion: the host did not charge it.
+    const priceFor = (d: string): number => approvedPrice.get(d) ?? p.basePrice;
     const stays: StayInput[] = bookings.map((b) => ({
       checkIn: dateToIso(b.checkIn),
       checkOut: dateToIso(b.checkOut),

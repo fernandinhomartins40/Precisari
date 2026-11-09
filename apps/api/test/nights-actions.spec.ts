@@ -171,6 +171,8 @@ describe('nights, actions and insights (integration)', () => {
     expect(body.current.month).toBe(monthOf(today));
     expect(body.history).toHaveLength(6);
     expect(body.history[5]).toEqual(body.current);
+    // Nothing stays approved after the revert above, so occupied nights earn the base price, not the suggestion.
+    if (body.current.adr > 0) expect(body.current.adr).toBe(property.basePrice);
     await request(ctx.http).get(`/v1/properties/${property.id}/insights`).query({ month: '2026-13' }).set(...bearer(session)).expect(400);
   });
 });
