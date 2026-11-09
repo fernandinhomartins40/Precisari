@@ -1,0 +1,264 @@
+.card {
+  position: relative;
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-raised);
+  touch-action: pan-y;
+  user-select: none;
+  overflow: hidden;
+  transition:
+    transform var(--spring-card-duration) var(--spring-card),
+    opacity var(--duration-base) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.card[data-dragging] {
+  transition: none;
+  cursor: grabbing;
+}
+
+.card[data-intent='approve'] {
+  box-shadow:
+    var(--shadow-raised),
+    inset 0 0 0 2px var(--color-positive);
+}
+
+.card[data-intent='dismiss'] {
+  box-shadow:
+    var(--shadow-raised),
+    inset 0 0 0 2px var(--color-border-strong);
+}
+
+.card[data-leaving='dismiss'] {
+  animation: exitLeft var(--duration-slow) var(--ease-exit) forwards;
+}
+
+.card[data-leaving='approve'] {
+  animation: exitRight var(--duration-slow) var(--ease-exit) calc(var(--spring-price-rise-duration) + var(--duration-base)) forwards;
+}
+
+@keyframes exitLeft {
+  to {
+    opacity: 0;
+    transform: translateX(-40%) rotate(calc(var(--swipe-rotation) * -1));
+  }
+}
+
+@keyframes exitRight {
+  to {
+    opacity: 0;
+    transform: translateX(40%) rotate(var(--swipe-rotation));
+  }
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.date {
+  font-size: var(--font-size-label);
+  letter-spacing: 0.04em;
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-caption);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-muted);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-label);
+}
+
+.badgeHot {
+  background: var(--color-heat-3);
+  color: var(--color-heat-text-3);
+}
+
+.property {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-label);
+}
+
+.headline {
+  font-size: var(--font-size-h2);
+  line-height: var(--line-height-h2);
+  font-weight: var(--font-weight-h1);
+}
+
+.explanation {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body-lg);
+  line-height: var(--line-height-body-lg);
+}
+
+.prices {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  margin-top: var(--space-1);
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+}
+
+.from {
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-h1);
+  color: var(--color-text-secondary);
+}
+
+.arrow {
+  align-self: center;
+  color: var(--color-text-primary);
+}
+
+.to {
+  font-size: var(--font-size-number);
+  line-height: var(--line-height-number);
+  font-weight: var(--font-weight-number);
+  letter-spacing: var(--letter-spacing-number);
+  color: var(--color-accent-strong);
+}
+
+.unit {
+  font-family: var(--font-body);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body-lg);
+}
+
+.chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-muted);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+  font-weight: var(--font-weight-caption);
+}
+
+.limits {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-positive);
+  font-weight: var(--font-weight-caption);
+}
+
+.limitsAdjusted {
+  color: var(--color-text-secondary);
+}
+
+.buttons {
+  display: grid;
+  gap: var(--space-2);
+}
+
+/* "Price rises" on approval: spring keyframes (motion.spring.priceRise → CSS linear()). */
+.approvedOverlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--space-2);
+  background: color-mix(in srgb, var(--color-surface) 94%, transparent);
+  animation: fadeIn var(--duration-fast) var(--ease-standard) both;
+}
+
+.approvedCheck {
+  display: grid;
+  place-items: center;
+  width: var(--space-16);
+  height: var(--space-16);
+  border-radius: var(--radius-pill);
+  background: var(--color-positive-surface);
+  color: var(--color-positive);
+  animation: pop var(--spring-price-rise-duration) var(--spring-price-rise) both;
+}
+
+.approvedPrice {
+  font-family: var(--font-display);
+  font-size: calc(var(--font-size-number) * 1.25);
+  line-height: 1;
+  font-weight: var(--font-weight-number);
+  color: var(--color-accent-strong);
+  font-variant-numeric: tabular-nums;
+  animation: priceRise var(--spring-price-rise-duration) var(--spring-price-rise) var(--duration-instant) both;
+}
+
+.approvedLabel {
+  font-weight: var(--font-weight-label);
+  color: var(--color-positive);
+  animation: fadeIn var(--duration-base) var(--ease-standard) var(--duration-base) both;
+}
+
+@keyframes priceRise {
+  from {
+    transform: translateY(var(--space-12)) scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.4);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 479px) {
+  .card {
+    padding: var(--space-5) var(--space-4);
+  }
+  .headline {
+    font-size: var(--font-size-h3);
+    line-height: var(--line-height-h3);
+  }
+  .to {
+    font-size: var(--font-size-display);
+    line-height: var(--line-height-display);
+  }
+  .from {
+    font-size: var(--font-size-h2);
+  }
+}
