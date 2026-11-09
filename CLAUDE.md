@@ -42,6 +42,8 @@ App de precificação dinâmica para anfitriões de Airbnb no Brasil (1 a 3 imó
 - `pnpm --filter mobile dev` — Expo (Expo Go); `EXPO_PUBLIC_API_MOCK=true` para dados de demonstração, ou `EXPO_PUBLIC_API_URL=http://<IP-da-LAN>:3333`
 - `pnpm --filter mobile export:web` — exporta o app mobile para web (verificação de bundle)
 
+- Deploy: `git push origin main` dispara `.github/workflows/deploy.yml` (CI → imagens no GHCR → VPS faz pull). Use apenas a branch `main`.
+
 Atualize esta seção sempre que criar ou mudar um comando.
 
 ## Convenções de código
@@ -75,3 +77,4 @@ Moderno, simples e disruptivo (detalhes na seção 2 do PRD):
 - Contratos da API: `packages/shared` (Zod) + rotas em `packages/shared/src/routes.ts`. `packages/api-client` é o cliente tipado usado por web e mobile.
 - Pacotes internos compilam para `dist/` (CommonJS); `turbo` roda `^build` antes de `dev`, `typecheck`, `lint` e `test`.
 - Banco local: `docker compose up -d` (ou Postgres/Redis locais). Copie `.env.example` para `apps/api/.env`.
+- Produção: tudo na VPS `72.60.10.108` (SSH `digiurban-vps`, compartilhada com outros projetos), domínio canônico `www.precisari.com.br`, API em `api.precisari.com.br`, nginx do host em `deploy/nginx/precisari.conf` (aplicado à mão em `/etc/nginx/sites-available/precisari`). Portas: web `3200`, API `3210`, sempre presas a `127.0.0.1` (o `ufw` está inativo). Postgres e Redis sem porta publicada. Segredos só em `/opt/precisari/.env` na VPS.

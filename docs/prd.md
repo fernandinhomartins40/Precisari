@@ -217,7 +217,7 @@ type NightRecommendation = {
 | Motor | `packages/pricing-engine` (TS puro, Vitest) |
 | Cliente de API | Gerado a partir do OpenAPI (`packages/api-client`) |
 | Observabilidade | Sentry (apps e API), logs estruturados (pino) |
-| Infra | Docker; deploy da API e workers em PaaS (Railway, Render ou Fly.io); web na Vercel; builds mobile com EAS |
+| Infra | Docker; web, API, workers, PostgreSQL e Redis em VPS própria (Hostinger), atrás do nginx do host; builds mobile com EAS |
 
 ### 8.2 Estrutura do monorepo
 
