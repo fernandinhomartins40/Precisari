@@ -1,11 +1,15 @@
 import type { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import type { Express } from 'express';
 import { API_PREFIX } from '@precisari/shared';
 import { HttpExceptionFilter } from './common/http-exception.filter';
 import type { Env } from './config/env';
 
 /** Shared HTTP setup for main.ts and the integration tests. */
 export function configureApp(app: INestApplication, env: Env, opts: { swagger?: boolean } = {}): void {
+  // Behind exactly one proxy (host nginx) in production. Without this every user shares nginx's IP
+  // in the rate limiter, and the OTP limit would lock everyone out at 5 requests per minute.
+  if (env.NODE_ENV === 'production') (app.getHttpAdapter().getInstance() as Express).set('trust proxy', 1);
   app.setGlobalPrefix(API_PREFIX.replace(/^\//, ''));
   app.enableCors({ origin: env.CORS_ORIGINS.split(',').map((o) => o.trim()), credentials: true });
   app.useGlobalFilters(new HttpExceptionFilter());
