@@ -23,6 +23,7 @@ export const EnvSchema = z.object({
   RESEND_API_KEY: z.string().default(''),
   EMAIL_FROM: z.string().default('Precisari <ola@precisari.com.br>'),
   HOLIDAYS_PROVIDER: z.enum(['brasilapi', 'fake']).default('brasilapi'),
+  BRASILAPI_BASE_URL: z.string().default('https://brasilapi.com.br/api'),
   WEATHER_PROVIDER: z.enum(['open-meteo', 'fake']).default('open-meteo'),
   OPEN_METEO_BASE_URL: z.string().default('https://api.open-meteo.com'),
   GEO_PROVIDER: z.enum(['google', 'fake']).default('fake'),
@@ -38,6 +39,8 @@ export const EnvSchema = z.object({
   CHANNEX_BASE_URL: z.string().default('https://staging.channex.io/api/v1'),
   CHANNEX_API_KEY: z.string().default(''),
   SENTRY_DSN: z.string().default(''),
+  /** Seed curated data (state/municipal holidays, school vacations) and sync national holidays at boot when empty. */
+  DATA_SEED_ON_BOOT: bool.default('true'),
   APPLE_CLIENT_ID: z.string().default(''),
   GOOGLE_CLIENT_ID: z.string().default(''),
 });
