@@ -19,6 +19,7 @@ import { AnthropicLlmProvider } from './llm/anthropic.adapter';
 import { FakeLlmProvider } from './llm/llm.fake';
 import { ExpoPushProvider } from './push/expo.adapter';
 import { FakePushProvider } from './push/push.fake';
+import { AsaasBillingProvider } from './billing/asaas.adapter';
 import { FakeBillingProvider } from './billing/fake-billing.adapter';
 import { ChannexHttpProvider } from './channex/channex.adapter';
 import { FakeChannexProvider } from './channex/channex.fake';
@@ -58,8 +59,12 @@ export const adapterFactories = {
       ? requireKey<LlmProvider>(env, 'llm', env.ANTHROPIC_API_KEY, () => new AnthropicLlmProvider(env.ANTHROPIC_API_KEY, env.ANTHROPIC_MODEL), () => new FakeLlmProvider())
       : new FakeLlmProvider(),
   push: (env: Env): PushProvider => (env.PUSH_PROVIDER === 'expo' ? new ExpoPushProvider(env.EXPO_ACCESS_TOKEN) : new FakePushProvider()),
-  // Gateway not chosen yet (PRD §12): only the fake exists. See billing/README.md.
-  billing: (env: Env): BillingProvider => new FakeBillingProvider(env.BILLING_WEBHOOK_SECRET, env.WEB_PUBLIC_URL),
+  billing: (env: Env): BillingProvider => {
+    const fake = () => new FakeBillingProvider(env.BILLING_WEBHOOK_SECRET, env.WEB_PUBLIC_URL);
+    if (env.BILLING_PROVIDER !== 'asaas') return fake();
+    const configured = env.ASAAS_API_KEY && env.ASAAS_WEBHOOK_TOKEN;
+    return requireKey<BillingProvider>(env, 'billing', configured, () => new AsaasBillingProvider(env.ASAAS_API_KEY, env.ASAAS_WEBHOOK_TOKEN, env.ASAAS_BASE_URL), fake);
+  },
   channex: (env: Env): ChannexProvider =>
     env.CHANNEX_PROVIDER === 'channex'
       ? requireKey<ChannexProvider>(env, 'channex', env.CHANNEX_API_KEY, () => new ChannexHttpProvider(env.CHANNEX_BASE_URL, env.CHANNEX_API_KEY), () => new FakeChannexProvider())

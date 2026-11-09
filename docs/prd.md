@@ -348,7 +348,7 @@ Todas atrás de **interfaces (adapters)** em `apps/api/src/integrations/*`, para
 ## 12. Questões em aberto
 
 - Identidade visual definitiva da marca Precisari (logo, paleta, tom de voz).
-- Gateway de pagamento escolhido.
+- Gateway de pagamento: Asaas (decidido em 2026-11-09).
 - Fontes de eventos por cidade no lançamento (quais 5 cidades primeiro?).
 - Resposta do Channex sobre certificação white-label e recursos do Airbnb.
 - Regras vigentes das lojas para assinatura vendida fora do app.

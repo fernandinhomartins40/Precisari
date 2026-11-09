@@ -35,7 +35,11 @@ export const EnvSchema = z.object({
   ANTHROPIC_MODEL: z.string().default('claude-haiku-5-5'),
   PUSH_PROVIDER: z.enum(['expo', 'fake']).default('fake'),
   EXPO_ACCESS_TOKEN: z.string().default(''),
-  BILLING_PROVIDER: z.enum(['fake']).default('fake'),
+  BILLING_PROVIDER: z.enum(['fake', 'asaas']).default('fake'),
+  ASAAS_API_KEY: z.string().default(''),
+  ASAAS_BASE_URL: z.string().default('https://api.asaas.com/v3'),
+  /** Static token Asaas sends in `asaas-access-token`; never the API key. */
+  ASAAS_WEBHOOK_TOKEN: z.string().default(''),
   BILLING_WEBHOOK_SECRET: z.string().default('change-me-webhook-secret'),
   CHANNEX_PROVIDER: z.enum(['channex', 'fake']).default('fake'),
   CHANNEX_BASE_URL: z.string().default('https://staging.channex.io/api/v1'),

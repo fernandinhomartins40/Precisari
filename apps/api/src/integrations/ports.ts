@@ -66,11 +66,13 @@ export interface PushMessage { to: string; title: string; body: string; data?: R
 export interface PushResult { token: string; ok: boolean; error?: 'DeviceNotRegistered' | string }
 export interface PushProvider extends IntegrationAdapter { send(messages: PushMessage[]): Promise<PushResult[]> }
 
-// ---------- Billing (gateway TBD) ----------
+// ---------- Billing (Asaas) ----------
 export const BILLING_PROVIDER = Symbol('BILLING_PROVIDER');
 export interface CreateCheckoutInput {
   userId: string; email: string; plan: Exclude<Plan, 'FREE'>; cycle: BillingCycle; paymentMethod: PaymentMethod;
-  propertyCount: number; amountCents: number; taxId?: string;
+  propertyCount: number; amountCents: number; taxId?: string; name?: string;
+  /** First charge date (yyyy-mm-dd): the end of the trial, or today when there is none. */
+  firstDueDate: string;
 }
 export interface CheckoutResult {
   checkoutId: string; providerRef: string; status: 'PENDING' | 'PAID'; redirectUrl: string | null;
@@ -79,8 +81,8 @@ export interface CheckoutResult {
 export interface BillingProvider extends IntegrationAdapter {
   readonly name: string;
   createCheckout(input: CreateCheckoutInput): Promise<CheckoutResult>;
-  /** Verify signature and normalize the payload. Throws on invalid signature. */
-  parseWebhook(headers: Record<string, string | string[] | undefined>, rawBody: string): Promise<BillingWebhookEvent>;
+  /** Verify signature and normalize the payload. Throws on invalid signature; null = valid but not for us. */
+  parseWebhook(headers: Record<string, string | string[] | undefined>, rawBody: string): Promise<BillingWebhookEvent | null>;
   cancel(providerRef: string): Promise<void>;
 }
 

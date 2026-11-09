@@ -7,6 +7,7 @@ import { AppError } from '../common/app-error';
 import { BILLING_PROVIDER, type BillingProvider } from '../integrations/ports';
 import { IntegrationError } from '../integrations/common/http';
 import { toAppError } from '../integrations/common/errors';
+import { localDateHour } from '../integrations/common/text';
 import { TRIAL_DAYS, checkoutAmountCents } from './plans';
 
 type CheckoutIn = z.output<typeof CheckoutBody>;
@@ -43,28 +44,35 @@ export class BillingService {
     }
     const user = await this.prisma.user.findFirst({
       where: { id: userId, deletedAt: null },
-      select: { email: true, subscription: true },
+      select: { email: true, name: true, subscription: true },
     });
     if (!user) throw new AppError(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED, 'Faça login para continuar');
+
+    const sub = user.subscription;
+    const neverTrialed = !sub?.trialEndsAt && sub?.status !== 'TRIALING';
+    const alreadyPaid = sub && sub.plan !== 'FREE' && sub.status === 'ACTIVE';
+    const startsTrial = neverTrialed && !alreadyPaid;
+    const now = Date.now();
+    const trialEndsAt = new Date(now + TRIAL_DAYS * 86_400_000);
+    // Charging during the trial would turn an unpaid invoice into PAST_DUE and end the trial early.
+    const firstDueDate = localDateHour(startsTrial ? trialEndsAt : new Date(now), 'America/Sao_Paulo').date;
 
     const amountCents = checkoutAmountCents(body.plan, body.cycle, body.propertyCount);
     let result;
     try {
       result = await this.provider.createCheckout({
         userId, email: user.email, plan: body.plan, cycle: body.cycle, paymentMethod: body.paymentMethod,
-        propertyCount: body.propertyCount, amountCents, taxId: body.taxId,
+        propertyCount: body.propertyCount, amountCents, taxId: body.taxId, name: user.name ?? undefined, firstDueDate,
       });
     } catch (err) {
+      if (err instanceof IntegrationError && err.status === 400) {
+        throw new AppError(HttpStatus.UNPROCESSABLE_ENTITY, ErrorCode.VALIDATION, 'Confira o CPF ou CNPJ e tente de novo');
+      }
       throw toAppError(err);
     }
 
-    const sub = user.subscription;
-    const neverTrialed = !sub?.trialEndsAt && sub?.status !== 'TRIALING';
-    const alreadyPaid = sub && sub.plan !== 'FREE' && sub.status === 'ACTIVE';
-    const now = Date.now();
-    const trialEndsAt = new Date(now + TRIAL_DAYS * 86_400_000);
     const common = { provider: this.provider.name, providerRef: result.providerRef, propertyCount: body.propertyCount };
-    if (neverTrialed && !alreadyPaid) {
+    if (startsTrial) {
       // First paid intent: start the 14-day trial on the chosen plan right away.
       await this.prisma.subscription.upsert({
         where: { userId },
@@ -77,6 +85,14 @@ export class BillingService {
         where: { userId },
         create: { userId, plan: 'FREE', status: 'ACTIVE', ...common },
         update: common,
+      });
+    }
+
+    // A new checkout replaces the previous gateway subscription; left alive it would keep charging.
+    // Runs after the update above so its cancellation webhook no longer matches this user.
+    if (sub?.provider === this.provider.name && sub.providerRef && sub.providerRef !== result.providerRef) {
+      await this.provider.cancel(sub.providerRef).catch((err: unknown) => {
+        this.log.error(`could not cancel replaced subscription ${sub.providerRef}: ${String(err)}`);
       });
     }
 
@@ -110,16 +126,17 @@ export class BillingService {
     headers: Record<string, string | string[] | undefined>,
     rawBody: string,
   ): Promise<{ received: true; duplicate: boolean; applied: boolean }> {
-    let event: BillingWebhookEvent;
+    let event: BillingWebhookEvent | null;
     try {
       event = await this.provider.parseWebhook(headers, rawBody);
     } catch (err) {
       if (err instanceof IntegrationError && err.status === 401) {
         throw new AppError(HttpStatus.UNAUTHORIZED, 'WEBHOOK_SIGNATURE_INVALID', 'Assinatura do webhook inválida');
       }
-      if (err instanceof IntegrationError) throw new AppError(HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION, 'Webhook inválido', err.details);
-      throw err;
+      if (err instanceof IntegrationError && err.status === 400) throw new AppError(HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION, 'Webhook inválido', err.details);
+      throw toAppError(err);
     }
+    if (!event) return { received: true, duplicate: false, applied: false };
     const parsed = BillingWebhookEvent.safeParse(event);
     if (!parsed.success) throw new AppError(HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION, 'Webhook inválido', parsed.error.flatten());
     event = parsed.data;

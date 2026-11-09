@@ -44,6 +44,22 @@ describe('Billing API (RF-70/71/72)', () => {
     expect(plans[0]?.maxProperties).toBe(1);
   });
 
+  it('charges at the end of the trial, then today, and cancels the subscription it replaces', async () => {
+    const auth = { Authorization: `Bearer ${token}` };
+    const first = await http().post('/v1/billing/checkout').set(auth).send(checkoutBody);
+    expect(first.status).toBe(201);
+    const inTrial = t.fakes.billing.checkouts[0]!.firstDueDate;
+    expect(new Date(inTrial).getTime() - Date.now()).toBeGreaterThan(12.9 * 86_400_000);
+    const { providerRef } = await t.prisma.subscription.findUniqueOrThrow({ where: { userId: user.id } });
+
+    t.fakes.billing.canceled.length = 0;
+    await http().post('/v1/billing/checkout').set(auth).send({ ...checkoutBody, plan: 'AUTO' });
+    expect(new Date(t.fakes.billing.checkouts[1]!.firstDueDate).getTime() - Date.now()).toBeLessThan(1.1 * 86_400_000);
+    expect(t.fakes.billing.canceled).toEqual([providerRef]);
+    const replaced = await t.prisma.subscription.findUniqueOrThrow({ where: { userId: user.id } });
+    expect(replaced.providerRef).not.toBe(providerRef);
+  });
+
   it('checkout requires auth and validates the body', async () => {
     expect((await http().post('/v1/billing/checkout').send(checkoutBody)).status).toBe(401);
     const bad = await http().post('/v1/billing/checkout').set('Authorization', `Bearer ${token}`).send({ plan: 'FREE', paymentMethod: 'PIX' });
