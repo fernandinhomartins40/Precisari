@@ -1,7 +1,7 @@
 name: CI
 on:
-  push:
-    branches: [main]
+  # Pushes to main run this through deploy.yml, which blocks the deploy if it fails.
+  workflow_call:
   pull_request:
 jobs:
   ci:
