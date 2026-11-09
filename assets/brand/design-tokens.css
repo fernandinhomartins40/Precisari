@@ -1,0 +1,19 @@
+/* Precisari — valores de implementação sRGB */
+:root {
+  --brand-navy: #162b49;
+  --brand-tangerine: #ff8845;
+  --surface-page: #f7f5f0;
+  --surface-card: #ffffff;
+  --text-primary: #162b49;
+  --text-secondary: #556171;
+  --border-subtle: #deded9;
+  --positive: #17633f;
+  --positive-surface: #e3f3e9;
+  --demand-low: #e2f0f7;
+  --demand-medium: #ffe9d6;
+  --demand-high: #ffb38a;
+  --radius-control: 12px;
+  --radius-card: 20px;
+}
+/* Botão tangerina: texto marinho; fundo marinho: texto branco.
+   Usar cor + texto/ícone para demanda e estados. */

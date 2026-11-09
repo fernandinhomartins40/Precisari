@@ -1,0 +1,17 @@
+node_modules
+dist
+.next
+out
+coverage
+.turbo
+.expo
+.env
+.env.*.local
+apps/api/.env
+apps/web/.env.local
+*.log
+.DS_Store
+*.tsbuildinfo
+ios/
+android/
+.claude/worktrees

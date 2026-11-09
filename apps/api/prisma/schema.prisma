@@ -1,0 +1,411 @@
+// Data model — docs/prd.md §8.3. Money in cents (Int). Night dates as DATE (no time).
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AuthProvider {
+  EMAIL
+  APPLE
+  GOOGLE
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum Plan {
+  FREE
+  PRO
+  AUTO
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  EXPIRED
+}
+
+enum DestinationType {
+  BEACH
+  MOUNTAIN
+  URBAN
+  RURAL
+  CULTURAL
+}
+
+enum Aggressiveness {
+  CONSERVATIVE
+  BALANCED
+  BOLD
+}
+
+enum CalendarSourceType {
+  ICAL
+  CHANNEX
+}
+
+enum CalendarSourceStatus {
+  PENDING
+  OK
+  ERROR
+}
+
+enum BookingStatus {
+  BOOKED
+  BLOCKED
+  CANCELLED
+}
+
+enum ActionType {
+  PRICE
+  MIN_STAY
+  ORPHAN
+  ADJACENT
+}
+
+enum ActionStatus {
+  PENDING
+  APPROVED
+  DISMISSED
+  APPLIED
+  REVERTED
+}
+
+enum EventSize {
+  P
+  M
+  G
+  XG
+}
+
+enum HolidayScope {
+  NATIONAL
+  STATE
+  MUNICIPAL
+}
+
+enum HolidayKind {
+  REGULAR
+  CARNIVAL
+  NEW_YEAR
+}
+
+model User {
+  id                    String       @id @default(cuid())
+  email                 String       @unique
+  name                  String?
+  authProvider          AuthProvider @default(EMAIL)
+  providerSubject       String?
+  role                  UserRole     @default(USER)
+  dailyNotificationHour Int          @default(9)
+  timezone              String       @default("America/Sao_Paulo")
+  emailWeeklySummary    Boolean      @default(true)
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+  deletedAt             DateTime?
+
+  subscription  Subscription?
+  properties    Property[]
+  refreshTokens RefreshToken[]
+  devices       DeviceToken[]
+  auditLogs     AuditLog[]
+  consents      Consent[]
+}
+
+/// One-time email login codes (hashed).
+model OtpCode {
+  id         String    @id @default(cuid())
+  email      String
+  codeHash   String
+  attempts   Int       @default(0)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([email, createdAt])
+}
+
+/// Rotating refresh tokens. `familyId` groups a rotation chain; reuse of a rotated token revokes the family.
+model RefreshToken {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  familyId   String
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  replacedBy String?
+  createdAt  DateTime  @default(now())
+  userAgent  String?
+
+  @@index([userId])
+  @@index([familyId])
+}
+
+model Subscription {
+  id               String             @id @default(cuid())
+  userId           String             @unique
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan             Plan               @default(FREE)
+  status           SubscriptionStatus @default(ACTIVE)
+  provider         String             @default("none")
+  providerRef      String?            @unique
+  propertyCount    Int                @default(1)
+  currentPeriodEnd DateTime?
+  trialEndsAt      DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+}
+
+model Property {
+  id                String          @id @default(cuid())
+  userId            String
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name              String
+  address           String
+  lat               Float
+  lng               Float
+  city              String
+  state             String          @db.Char(2)
+  ibgeCode          String?
+  destinationType   DestinationType
+  capacity          Int
+  bedrooms          Int
+  basePrice         Int
+  minPrice          Int
+  maxPrice          Int
+  cleaningFee       Int             @default(0)
+  monthlyFixedCosts Int?
+  platformFeePct    Float           @default(0.03)
+  aggressiveness    Aggressiveness  @default(BALANCED)
+  rulesConfig       Json            @default("{\"enabled\":{}}")
+  timezone          String          @default("America/Sao_Paulo")
+  listingUrl        String?
+  photoUrl          String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  deletedAt         DateTime?
+
+  calendarSources CalendarSource[]
+  bookings        Booking[]
+  nightPrices     NightPrice[]
+  actions         Action[]
+
+  @@index([userId])
+  @@index([city, state])
+}
+
+model CalendarSource {
+  id                String               @id @default(cuid())
+  propertyId        String
+  property          Property             @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  type              CalendarSourceType   @default(ICAL)
+  /// AES-256-GCM encrypted URL (iv:tag:ciphertext, base64).
+  urlEncrypted      String?
+  urlMasked         String?
+  /// sha256 of last fetched content — detects changes.
+  contentHash       String?
+  channexPropertyId String?
+  channexTokenEnc   String?
+  lastSyncAt        DateTime?
+  status            CalendarSourceStatus @default(PENDING)
+  lastError         String?
+  consecutiveErrors Int                  @default(0)
+  createdAt         DateTime             @default(now())
+
+  @@index([propertyId])
+}
+
+model Booking {
+  id          String        @id @default(cuid())
+  propertyId  String
+  property    Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  source      String        @default("ical")
+  externalUid String
+  checkIn     DateTime      @db.Date
+  checkOut    DateTime      @db.Date
+  status      BookingStatus @default(BOOKED)
+  /// Real revenue (cents) — only via Channex (phase 2).
+  revenue     Int?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@unique([propertyId, source, externalUid])
+  @@index([propertyId, checkIn])
+}
+
+model NightPrice {
+  id             String   @id @default(cuid())
+  propertyId     String
+  property       Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  date           DateTime @db.Date
+  status         String   @default("free")
+  suggestedPrice Int
+  minStay        Int
+  discountPct    Float?
+  factors        Json
+  heat           Float
+  isOrphan       Boolean  @default(false)
+  headline       String?
+  explanation    String?
+  /// Hash of factors+price used as LLM explanation cache key.
+  factorsHash    String?
+  computedAt     DateTime @default(now())
+  engineVersion  String
+
+  @@unique([propertyId, date])
+}
+
+model Action {
+  id            String       @id @default(cuid())
+  propertyId    String
+  property      Property     @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  date          DateTime     @db.Date
+  type          ActionType
+  fromValue     Int
+  toValue       Int
+  estimatedGain Int          @default(0)
+  status        ActionStatus @default(PENDING)
+  headline      String?
+  explanation   String?
+  factors       Json         @default("[]")
+  decidedAt     DateTime?
+  appliedAt     DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([propertyId, status])
+  @@index([propertyId, date])
+}
+
+/// Cache of LLM explanations keyed by (property, date, factorsHash).
+model ExplanationCache {
+  id         String   @id @default(cuid())
+  cacheKey   String   @unique
+  headline   String
+  text       String
+  model      String
+  createdAt  DateTime @default(now())
+}
+
+model Event {
+  id        String    @id @default(cuid())
+  name      String
+  city      String
+  state     String    @db.Char(2)
+  lat       Float
+  lng       Float
+  startDate DateTime  @db.Date
+  endDate   DateTime  @db.Date
+  size      EventSize
+  radiusKm  Float     @default(5)
+  source    String    @default("manual")
+  verified  Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([city, state, startDate])
+}
+
+model Holiday {
+  id       String       @id @default(cuid())
+  date     DateTime     @db.Date
+  scope    HolidayScope
+  state    String?      @db.Char(2)
+  ibgeCode String?
+  name     String
+  isBridge Boolean      @default(false)
+  kind     HolidayKind  @default(REGULAR)
+
+  @@unique([date, scope, state, ibgeCode, name])
+  @@index([date])
+}
+
+model SchoolVacation {
+  id        String   @id @default(cuid())
+  state     String   @db.Char(2)
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+  year      Int
+
+  @@index([state, year])
+}
+
+model WeatherForecast {
+  id         String   @id @default(cuid())
+  /// Rounded grid (0.1°) to share forecasts by region.
+  lat        Float
+  lng        Float
+  date       DateTime @db.Date
+  precipProb Float
+  precipMm   Float?
+  tempMin    Float
+  tempMax    Float
+  fetchedAt  DateTime @default(now())
+
+  @@unique([lat, lng, date])
+}
+
+model DeviceToken {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expoPushToken String   @unique
+  platform      String
+  createdAt     DateTime @default(now())
+  lastSeenAt    DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  payload   Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+/// LGPD consent records.
+model Consent {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      String
+  version   String
+  grantedAt DateTime @default(now())
+  revokedAt DateTime?
+}
+
+/// Idempotency-Key storage for POSTs on billing and actions.
+model IdempotencyKey {
+  id         String   @id @default(cuid())
+  key        String
+  userId     String
+  route      String
+  statusCode Int
+  response   Json
+  createdAt  DateTime @default(now())
+
+  @@unique([key, userId, route])
+}
+
+/// Processed webhook event ids (billing, channex) for dedup.
+model WebhookEvent {
+  id         String   @id @default(cuid())
+  provider   String
+  externalId String
+  payload    Json
+  receivedAt DateTime @default(now())
+
+  @@unique([provider, externalId])
+}
