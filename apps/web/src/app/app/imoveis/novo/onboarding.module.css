@@ -299,7 +299,7 @@
   font-weight: var(--font-weight-label);
 }
 
-[data-highlight] {
+.screen [data-highlight] {
   box-shadow: 0 0 0 2px var(--color-accent);
   animation: pulse var(--duration-glow) var(--ease-standard) infinite alternate;
 }

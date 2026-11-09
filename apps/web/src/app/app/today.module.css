@@ -271,6 +271,10 @@
   .sideCol {
     display: contents;
   }
+  .mainCol > *,
+  .sideCol > * {
+    width: 100%;
+  }
   .greeting {
     order: 1;
   }
@@ -294,7 +298,8 @@
     line-height: var(--line-height-h1);
   }
   .summary {
-    padding: var(--space-5);
+    padding: var(--space-5) var(--space-5) var(--space-6);
+    clip-path: polygon(0 0, 100% 0, 100% 72%, 90% 100%, 0 100%);
   }
   .summaryValue {
     font-size: var(--font-size-number);
