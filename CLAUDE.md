@@ -33,6 +33,10 @@ App de precificação dinâmica para anfitriões de Airbnb no Brasil (1 a 3 imó
 - `pnpm lint` / `pnpm typecheck`
 - `docker compose up -d` — Postgres e Redis locais
 - `pnpm --filter api prisma migrate dev` — migrações
+- `pnpm --filter api dev` — API em modo dev (http://localhost:3333, OpenAPI em `/docs`)
+- `pnpm --filter api start:worker` (ou `pnpm --filter worker start`) — worker BullMQ (requer Redis e `JOBS_ENABLED=true`)
+- `pnpm --filter api db:seed` — dados de demonstração (carla@precisari.dev, Studio do Campeche)
+- `pnpm --filter api test` — testes da API (usa `TEST_DATABASE_URL` ou `DATABASE_URL`, senão `precisari_core_test` local)
 
 Atualize esta seção sempre que criar ou mudar um comando.
 

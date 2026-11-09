@@ -12,6 +12,13 @@ export const DEFAULT_MIN_STAY = 1;
  */
 export const DISCOUNT_BOOKING_UPLIFT = 0.2;
 
+/**
+ * MIN_STAY cards are only raised by special rules (RF-40 "regra nova"): long weekends and profit protection.
+ * The routine lead-time ladder (3/2/1 nights) stays visible in the night detail but does not create a card,
+ * otherwise the home would be flooded with zero-gain cards ("uma decisão por vez").
+ */
+export const MIN_STAY_CARD_FACTORS: ReadonlySet<string> = new Set(['longWeekend', 'profitProtection']);
+
 export const PRICE_FAMILY: readonly ActionType[] = ['PRICE', 'ORPHAN', 'ADJACENT'];
 
 export interface ActionPlan {
@@ -51,7 +58,7 @@ export function discountedPrice(rec: NightRecommendation, minPrice: number, maxP
 /**
  * Pure action generation (RF-40). One price-family action per free night at most, with precedence
  * ORPHAN > ADJACENT > PRICE (two cards with different prices for the same night would be confusing),
- * plus an independent MIN_STAY action when the engine's minimum stay differs from the known one.
+ * plus an independent MIN_STAY action when a special rule (long weekend, profit protection) changes the minimum stay.
  */
 export function generateActionPlans(input: GenerateInput): ActionPlan[] {
   const plans: ActionPlan[] = [];
@@ -80,7 +87,7 @@ export function generateActionPlans(input: GenerateInput): ActionPlan[] {
     }
 
     const knownMinStay = input.knownMinStay(rec.date);
-    if (rec.minStay !== knownMinStay) {
+    if (rec.minStay !== knownMinStay && factors.some((f) => MIN_STAY_CARD_FACTORS.has(f.key))) {
       plans.push({ date: rec.date, type: 'MIN_STAY', fromValue: knownMinStay, toValue: rec.minStay, estimatedGain: 0, factors });
     }
   }

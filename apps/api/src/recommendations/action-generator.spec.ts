@@ -60,13 +60,19 @@ describe('generateActionPlans', () => {
     expect(generateActionPlans({ ...base, recommendations: [rec({ date: '2026-12-30', suggestedPrice: 25500, discountPct: 7 })] })).toEqual([]);
   });
 
-  it('creates MIN_STAY when the engine minimum stay differs from the known one', () => {
+  it('creates MIN_STAY when a special rule changes the minimum stay', () => {
+    const lw = [{ key: 'longWeekend' as const, multiplier: 1.35, label: 'Feriadão' }];
     const plans = generateActionPlans({
       ...base,
       knownMinStay: (d) => (d === '2026-12-30' ? 3 : 1),
-      recommendations: [rec({ date: '2026-12-29', minStay: 3 }), rec({ date: '2026-12-30', minStay: 3 })],
+      recommendations: [rec({ date: '2026-12-29', minStay: 3, factors: lw }), rec({ date: '2026-12-30', minStay: 3, factors: lw })],
     });
     expect(plans).toEqual([expect.objectContaining({ date: '2026-12-29', type: 'MIN_STAY', fromValue: 1, toValue: 3, estimatedGain: 0 })]);
+  });
+
+  it('does not create MIN_STAY cards for the routine lead-time ladder', () => {
+    const plans = generateActionPlans({ ...base, recommendations: [rec({ date: '2027-02-10', minStay: 3 })] });
+    expect(plans.filter((p) => p.type === 'MIN_STAY')).toEqual([]);
   });
 
   it('uses the current known price (last approved) as the reference', () => {
