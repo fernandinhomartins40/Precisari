@@ -334,7 +334,8 @@ describe('rule: profit protection', () => {
     expect(factor(n, 'profitProtection')).toEqual({ key: 'profitProtection', multiplier: 1, label: 'Estadia mínima ajustada' });
   });
   it('honours rules.minProfitPerNight', () => {
-    const recs = run({ property: p({ rules: { enabled: { weekday: false, seasonality: false, demand: false, weather: false, leadTime: false, minStay: false, orphan: false, adjacent: false }, minProfitPerNight: 5000 } }), horizonDays: 3 });
+    // only() keeps rules.minProfitPerNight and replaces just `enabled`.
+    const recs = run({ property: p({ rules: { minProfitPerNight: 5000 } }), horizonDays: 3 });
     expect(night(recs, TODAY).minStay).toBe(4);
   });
   it('never exceeds the free nights before the next booking', () => {
