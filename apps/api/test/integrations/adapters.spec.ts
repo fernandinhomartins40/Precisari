@@ -268,7 +268,7 @@ describe('Fake billing gateway', () => {
 
   it('creates checkouts per payment method', async () => {
     const b = new FakeBillingProvider('s');
-    const base = { userId: 'u', email: 'e', plan: 'PRO' as const, cycle: 'MONTHLY' as const, propertyCount: 1, amountCents: 2990 };
+    const base = { userId: 'u', email: 'e', plan: 'PRO' as const, cycle: 'MONTHLY' as const, propertyCount: 1, amountCents: 2990, firstDueDate: '2026-11-23' };
     expect((await b.createCheckout({ ...base, paymentMethod: 'PIX' })).pixCopyPaste).toContain('29.90');
     expect((await b.createCheckout({ ...base, paymentMethod: 'CARD' })).redirectUrl).toContain('/checkout/fake/');
     expect((await b.createCheckout({ ...base, paymentMethod: 'BOLETO' })).boletoUrl).toContain('/boleto');
