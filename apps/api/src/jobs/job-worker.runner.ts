@@ -35,7 +35,7 @@ export class JobWorkerRunner {
         async (j: Job) => {
           await job.handler(j.data as never);
         },
-        { connection, concurrency: opts.concurrency ?? 2 },
+        { connection, prefix: this.queues.prefix, concurrency: opts.concurrency ?? 2 },
       );
       worker.on('failed', (j, err) => void this.onFailed(job.queue, j, err));
       worker.on('error', (err) => this.logger.error({ err, queue: job.queue }, 'worker error'));

@@ -37,6 +37,10 @@ export class JobQueueService implements OnModuleDestroy {
     private readonly registry: JobsRegistry,
   ) {}
 
+  get prefix(): string {
+    return this.env.BULLMQ_PREFIX;
+  }
+
   get enabled(): boolean {
     return this.env.JOBS_ENABLED;
   }
@@ -63,7 +67,7 @@ export class JobQueueService implements OnModuleDestroy {
   queue(name: string): Queue {
     let q = this.queues.get(name);
     if (!q) {
-      q = new Queue(name, { connection: this.redis(), defaultJobOptions: DEFAULT_JOB_OPTIONS });
+      q = new Queue(name, { connection: this.redis(), prefix: this.prefix, defaultJobOptions: DEFAULT_JOB_OPTIONS });
       this.queues.set(name, q);
     }
     return q;

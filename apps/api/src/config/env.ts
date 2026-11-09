@@ -51,6 +51,8 @@ export const EnvSchema = z.object({
   TERMS_VERSION: z.string().default('2026-11'),
   RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(120),
   RATE_LIMIT_OTP_PER_MINUTE: z.coerce.number().int().positive().default(5),
+  /** Redis key prefix for BullMQ (isolates environments sharing a Redis). */
+  BULLMQ_PREFIX: z.string().default('bull'),
   ICAL_FETCH_TIMEOUT_MS: z.coerce.number().int().positive().default(10000),
   ICAL_MAX_BYTES: z.coerce.number().int().positive().default(2_000_000),
   /** Allow iCal URLs that resolve to private/loopback IPs. Unset ⇒ allowed outside production only. */

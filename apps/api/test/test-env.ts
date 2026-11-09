@@ -15,6 +15,7 @@ export function applyTestEnv(): void {
     DATA_ENCRYPTION_KEY: 'MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=',
     JOBS_ENABLED: 'false',
     LOG_LEVEL: 'silent',
+    BULLMQ_PREFIX: 'precisari-core-test',
     RATE_LIMIT_PER_MINUTE: '100000',
     RATE_LIMIT_OTP_PER_MINUTE: '100000',
     OTP_MAX_REQUESTS_PER_WINDOW: '1000',
