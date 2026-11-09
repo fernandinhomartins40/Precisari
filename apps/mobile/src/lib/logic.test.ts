@@ -3,7 +3,8 @@ import type { NightDto } from '@precisari/shared';
 import { t } from '@/i18n';
 import { addDays, formatLongDay, formatShortDay, weekdayOf } from './dates';
 import { dayPeriod, firstName, greeting } from './greeting';
-import { buildMonthGrids, demandLevel, mondayIndex } from './heat-grid';
+import { buildMonthGrids, demandLevel, mondayIndex, nightHasSuggestion } from './heat-grid';
+import { isIcalUrl } from './ical';
 import { centsToMaskedDisplay, maskBRLInput } from './money-mask';
 import { applyOtpBackspace, applyOtpInput, emptyOtp, isOtpComplete, otpCode, resendSecondsLeft } from './otp';
 import { factorPct, factorWeights, formatFactorPct } from './factors';
@@ -150,6 +151,20 @@ describe('heat-map grid', () => {
       .weeks.flat()
       .filter(Boolean);
     expect(sugg.map((c) => c!.matches)).toEqual([false, false, true, true]);
+  });
+});
+
+describe('ical link + suggestion threshold', () => {
+  it('validates Airbnb iCal export links', () => {
+    expect(isIcalUrl('https://www.airbnb.com.br/calendar/ical/123.ics?s=abc')).toBe(true);
+    expect(isIcalUrl('https://example.com/page')).toBe(false);
+    expect(isIcalUrl('not a url')).toBe(false);
+  });
+  it('flags suggestions above 5% (RF-40) or with pending actions', () => {
+    expect(nightHasSuggestion(night('2026-11-09', 0.5, { suggestedPrice: 25900 }), new Set())).toBe(false);
+    expect(nightHasSuggestion(night('2026-11-09', 0.5, { suggestedPrice: 27900 }), new Set())).toBe(true);
+    expect(nightHasSuggestion(night('2026-11-09', 0.5), new Set(['2026-11-09']))).toBe(true);
+    expect(nightHasSuggestion(night('2026-11-09', 0.5, { status: 'booked', suggestedPrice: 34900 }), new Set())).toBe(false);
   });
 });
 

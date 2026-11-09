@@ -36,7 +36,9 @@ function SocialButton({ label }: { label: string }) {
       <AppText variant="bodyLg" weight="600" color="textSecondary">
         {label}
       </AppText>
-      <Badge label={t('common.soon')} tone="muted" />
+      <View>
+        <Badge label={t('common.soon')} tone="muted" />
+      </View>
     </View>
   );
 }
