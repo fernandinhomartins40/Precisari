@@ -1,0 +1,17 @@
+{
+  "name": "worker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "BullMQ worker process. Same code as apps/api with a different entrypoint (docs/prd.md §8.2).",
+  "scripts": {
+    "start": "pnpm --filter api start:worker",
+    "start:dev": "pnpm --filter api dev:worker",
+    "lint": "eslint src",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.0",
+    "vitest": "^3.2.4"
+  }
+}

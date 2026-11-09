@@ -1,15 +1,21 @@
 import 'reflect-metadata';
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { HttpExceptionFilter } from './common/http-exception.filter';
-import { loadEnv } from './config/env';
+import { loadDotenv } from './config/load-dotenv';
+
+loadDotenv();
 
 async function bootstrap(): Promise<void> {
+  // Imported after .env is loaded so module factories see the final environment.
+  const { NestFactory } = await import('@nestjs/core');
+  const { Logger } = await import('nestjs-pino');
+  const { AppModule } = await import('./app.module');
+  const { configureApp } = await import('./bootstrap');
+  const { loadEnv } = await import('./config/env');
+
   const env = loadEnv();
-  const app = await NestFactory.create(AppModule);
-  app.setGlobalPrefix('v1');
-  app.enableCors({ origin: env.CORS_ORIGINS.split(','), credentials: true });
-  app.useGlobalFilters(new HttpExceptionFilter());
+  const app = await NestFactory.create(AppModule, { rawBody: true, bufferLogs: true });
+  app.useLogger(app.get(Logger));
+  configureApp(app, env);
   await app.listen(env.API_PORT);
+  app.get(Logger).log(`API listening on :${env.API_PORT} (docs at /docs)`);
 }
 void bootstrap();

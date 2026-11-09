@@ -43,6 +43,25 @@ export const EnvSchema = z.object({
   DATA_SEED_ON_BOOT: bool.default('true'),
   APPLE_CLIENT_ID: z.string().default(''),
   GOOGLE_CLIENT_ID: z.string().default(''),
+
+  // ---------- Core (auth, calendar, rate limiting, logging) ----------
+  LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
+  /** Secret for hashing OTP codes. Empty ⇒ falls back to JWT_ACCESS_SECRET. */
+  OTP_HASH_SECRET: z.string().default(''),
+  /** Max OTP emails per address per 15 minutes (extra requests are silently ignored). */
+  OTP_MAX_REQUESTS_PER_WINDOW: z.coerce.number().int().positive().default(5),
+  /** Version of the terms/privacy policy recorded as LGPD consent on first login. */
+  TERMS_VERSION: z.string().default('2026-11'),
+  RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(120),
+  RATE_LIMIT_OTP_PER_MINUTE: z.coerce.number().int().positive().default(5),
+  /** Redis key prefix for BullMQ (isolates environments sharing a Redis). */
+  BULLMQ_PREFIX: z.string().default('bull'),
+  ICAL_FETCH_TIMEOUT_MS: z.coerce.number().int().positive().default(10000),
+  ICAL_MAX_BYTES: z.coerce.number().int().positive().default(2_000_000),
+  /** Allow iCal URLs that resolve to private/loopback IPs. Unset ⇒ allowed outside production only. */
+  ICAL_ALLOW_PRIVATE_HOSTS: z.preprocess((v) => (v === '' ? undefined : v), z.enum(['true', 'false']).optional()),
+  /** Consecutive sync failures before a calendar is marked ERROR (RF-22). */
+  ICAL_ERROR_THRESHOLD: z.coerce.number().int().positive().default(3),
 });
 export type Env = z.infer<typeof EnvSchema>;
 

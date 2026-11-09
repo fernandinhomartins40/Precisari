@@ -29,7 +29,7 @@ export class AdminController {
 
   // ---------- events ----------
   @Get('events')
-  listEvents(@Query(new ZodPipe(EventsQuery)) q: EventsQuery): Promise<EventDto[]> {
+  listEvents(@Query(new ZodPipe(EventsQuery)) q: z.output<typeof EventsQuery>): Promise<EventDto[]> {
     return this.admin.listEvents(q);
   }
 
@@ -55,7 +55,7 @@ export class AdminController {
 
   // ---------- holidays ----------
   @Get('holidays')
-  listHolidays(@Query(new ZodPipe(HolidaysQuery)) q: HolidaysQuery): Promise<HolidayDto[]> {
+  listHolidays(@Query(new ZodPipe(HolidaysQuery)) q: z.output<typeof HolidaysQuery>): Promise<HolidayDto[]> {
     return this.admin.listHolidays(q);
   }
 
@@ -81,7 +81,7 @@ export class AdminController {
 
   // ---------- school vacations ----------
   @Get('school-vacations')
-  listVacations(@Query(new ZodPipe(VacationsQuery)) q: VacationsQuery): Promise<SchoolVacationDto[]> {
+  listVacations(@Query(new ZodPipe(VacationsQuery)) q: z.output<typeof VacationsQuery>): Promise<SchoolVacationDto[]> {
     return this.admin.listVacations(q);
   }
 
