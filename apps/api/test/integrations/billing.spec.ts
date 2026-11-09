@@ -4,6 +4,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { User } from '@prisma/client';
 import { PlanDto } from '@precisari/shared';
 import { BillingModule } from '../../src/billing/billing.module';
+import { CommonModule } from '../../src/common/common.module';
 import { IntegrationError } from '../../src/integrations/common/http';
 import { UsersModule } from '../../src/users/users.module';
 import { signFakeWebhook } from '../../src/integrations/billing/fake-billing.adapter';
@@ -24,7 +25,7 @@ describe('Billing API (RF-70/71/72)', () => {
   }
 
   beforeAll(async () => {
-    t = await createTestApp([BillingModule, UsersModule]);
+    t = await createTestApp([CommonModule, BillingModule, UsersModule]);
   });
   afterAll(async () => t.close());
   beforeEach(async () => {
