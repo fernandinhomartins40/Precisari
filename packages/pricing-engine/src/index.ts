@@ -1,27 +1,77 @@
 /**
- * PLACEHOLDER — to be fully implemented per docs/prd.md §7 (M1).
- * The exported names and signatures below are the stable public API used by apps/api.
+ * @precisari/pricing-engine — deterministic pricing (docs/prd.md §7). Pure TS, no I/O.
+ * Stable API used by apps/api: `computeRecommendations`, `ENGINE_VERSION` and the types.
  */
-import type { NightRecommendation, PricingContext } from './types';
-
 export * from './types';
 
-export const ENGINE_VERSION = '0.0.0-placeholder';
+export { ENGINE_VERSION } from './constants';
+export {
+  computeRecommendations,
+  netPerNight,
+  resolveMaxPrice,
+  resolveWeekdayMultipliers,
+} from './engine';
 
-export function computeRecommendations(ctx: PricingContext): NightRecommendation[] {
-  const out: NightRecommendation[] = [];
-  const start = new Date(`${ctx.today}T00:00:00Z`);
-  for (let i = 0; i < ctx.horizonDays; i++) {
-    const d = new Date(start.getTime() + i * 86_400_000).toISOString().slice(0, 10);
-    out.push({
-      date: d,
-      status: 'free',
-      suggestedPrice: ctx.property.basePrice,
-      minStay: 1,
-      factors: [],
-      heat: 0.5,
-      isOrphan: false,
-    });
-  }
-  return out;
-}
+export {
+  ADJACENT,
+  AGGRESSIVENESS_K,
+  DEFAULT_MAX_PRICE_FACTOR,
+  DEFAULT_WEEKDAY_MULTIPLIERS,
+  DEMAND,
+  MAX_PROTECTED_MIN_STAY,
+  ORPHAN,
+  URBAN_WEEKDAY_MULTIPLIERS,
+  WEATHER,
+  defaultWeekdayMultipliers,
+  leadTimeMinStay,
+  leadTimeMultiplier,
+} from './constants';
+export {
+  addDays,
+  dayOfWeek,
+  dayOfWeekOf,
+  diffDays,
+  eachDate,
+  fromDayNumber,
+  isValidDate,
+  monthIndex,
+  toDayNumber,
+} from './dates';
+export {
+  combineDemand,
+  eventDistanceWeight,
+  eventMultiplier,
+  eventSignal,
+  round4,
+  scaleMultiplier,
+  schoolVacationSignal,
+  type DemandSignal,
+} from './demand';
+export {
+  buildCalendarIndex,
+  detectLongWeekends,
+  holidayKind,
+  type CalendarIndex,
+  type CalendarSignal,
+  type LongWeekend,
+} from './calendar';
+export { buildOccupancy, checkInDays, detectGaps } from './occupancy';
+export {
+  applyLimitsAndRound,
+  ceilPsychological,
+  floorPsychological,
+  isPsychological,
+  roundPsychological,
+  type LimitedPrice,
+} from './rounding';
+export {
+  SEASONALITY,
+  regionForState,
+  resolveSeasonality,
+  seasonalityFor,
+  type MonthlyCurve,
+} from './seasonality';
+export { heatFromMultiplier, HEAT_AT_NEUTRAL, HEAT_COLD, HEAT_HOT, HEAT_NEUTRAL } from './heat';
+export { isRainyDay, weatherAdjustment, type WeatherAdjustment } from './weather';
+export { LABELS, formatDistance } from './labels';
+export { ACTION_THRESHOLD, summarize, type RecommendationSummary } from './summary';
