@@ -37,6 +37,10 @@ App de precificação dinâmica para anfitriões de Airbnb no Brasil (1 a 3 imó
 - `pnpm --filter api start:worker` (ou `pnpm --filter worker start`) — worker BullMQ (requer Redis e `JOBS_ENABLED=true`)
 - `pnpm --filter api db:seed` — dados de demonstração (carla@precisari.dev, Studio do Campeche)
 - `pnpm --filter api test` — testes da API (usa `TEST_DATABASE_URL` ou `DATABASE_URL`, senão `precisari_core_test` local)
+- `pnpm --filter web dev` — web em http://localhost:3000 (`NEXT_PUBLIC_API_MOCK=true` usa dados de demonstração; `false` + `NEXT_PUBLIC_API_URL` usa a API real)
+- `pnpm --filter web test:e2e` — E2E Playwright da web (modo mock)
+- `pnpm --filter mobile dev` — Expo (Expo Go); `EXPO_PUBLIC_API_MOCK=true` para dados de demonstração, ou `EXPO_PUBLIC_API_URL=http://<IP-da-LAN>:3333`
+- `pnpm --filter mobile export:web` — exporta o app mobile para web (verificação de bundle)
 
 Atualize esta seção sempre que criar ou mudar um comando.
 

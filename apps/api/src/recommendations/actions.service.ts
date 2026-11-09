@@ -98,10 +98,11 @@ export class ActionsService {
         next = { status: 'DISMISSED', decidedAt: now };
         break;
       case 'revert':
-        // Undo: an approval becomes REVERTED (the previous known price applies again); an undone dismissal
-        // brings the card back to PENDING.
+        // Undo (the apps' "Desfazer" toast): an approval or dismissal brings the card back to PENDING, so the
+        // previous known price applies again and the host can decide later. Only an action already APPLIED
+        // to the channel (phase 2, Channex) becomes REVERTED. The audit log keeps the full history.
         this.assertStatus(action, ['APPROVED', 'APPLIED', 'DISMISSED'], 'Não há decisão para desfazer.');
-        next = action.status === 'DISMISSED' ? { status: 'PENDING', decidedAt: null } : { status: 'REVERTED', decidedAt: now };
+        next = action.status === 'APPLIED' ? { status: 'REVERTED', decidedAt: now } : { status: 'PENDING', decidedAt: null };
         break;
     }
     // Optimistic concurrency: only transition from the status we read.

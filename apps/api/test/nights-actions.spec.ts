@@ -143,7 +143,7 @@ describe('nights, actions and insights (integration)', () => {
     expect(night.currentPrice).toBe(priceAction.toValue);
 
     const reverted = ActionDto.parse((await request(ctx.http).post(`/v1/actions/${priceAction.id}/revert`).set(...bearer(session)).expect(200)).body);
-    expect(reverted.status).toBe('REVERTED');
+    expect(reverted.status).toBe('PENDING'); // undo brings the card back
     const night2 = NightDetailDto.parse((await request(ctx.http).get(`/v1/properties/${property.id}/nights/${priceAction.date}`).set(...bearer(session)).expect(200)).body);
     expect(night2.currentPrice).toBe(24900);
 
