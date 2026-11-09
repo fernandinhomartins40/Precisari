@@ -1,0 +1,85 @@
+# Production stack on the shared VPS. Only web and API publish ports, and only on loopback
+# (the host firewall is inactive; the host nginx is the public entrance).
+name: precisari
+
+x-defaults: &defaults
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options: { max-size: 10m, max-file: "3" }
+
+x-app: &app
+  <<: *defaults
+  image: ghcr.io/fernandinhomartins40/precisari-api:${RELEASE}
+  env_file: ../.env
+
+services:
+  postgres:
+    <<: *defaults
+    image: postgres:16-alpine
+    mem_limit: 512m
+    environment:
+      POSTGRES_USER: precisari
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: precisari
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U precisari"]
+      interval: 5s
+      retries: 20
+
+  redis:
+    <<: *defaults
+    image: redis:7-alpine
+    mem_limit: 128m
+    # BullMQ requires noeviction: evicted keys would silently lose jobs.
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    volumes: [redisdata:/data]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 20
+
+  migrate:
+    <<: *app
+    restart: "no"
+    profiles: [migrate]
+    command: ["npx", "--no-install", "prisma", "migrate", "deploy"]
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  api:
+    <<: *app
+    mem_limit: 512m
+    ports: ["127.0.0.1:3210:3333"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3333/v1/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 10s
+      retries: 12
+      start_period: 20s
+
+  worker:
+    <<: *app
+    mem_limit: 512m
+    command: ["node", "dist/worker.js"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  web:
+    <<: *defaults
+    image: ghcr.io/fernandinhomartins40/precisari-web:${RELEASE}
+    mem_limit: 384m
+    ports: ["127.0.0.1:3200:3000"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 10s
+      retries: 12
+      start_period: 15s
+
+volumes:
+  pgdata:
+  redisdata:
