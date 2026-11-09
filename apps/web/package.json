@@ -1,0 +1,35 @@
+{
+  "name": "web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start --port 3000",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test --trace off"
+  },
+  "dependencies": {
+    "@precisari/api-client": "workspace:*",
+    "@precisari/design-tokens": "workspace:*",
+    "@precisari/shared": "workspace:*",
+    "@tanstack/react-query": "^5.90.0",
+    "lucide-react": "^0.546.0",
+    "next": "15.5.6",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@next/eslint-plugin-next": "15.5.6",
+    "@playwright/test": "1.63.0",
+    "@types/node": "^22.18.0",
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.1.9",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "sharp": "^0.34.4",
+    "vitest": "^3.2.4"
+  }
+}
