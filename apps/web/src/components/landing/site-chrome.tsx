@@ -39,6 +39,8 @@ export function SiteFooter() {
           <Link href="/privacidade">{t('landing.footer.privacy')}</Link>
           <span aria-hidden="true">·</span>
           <Link href="/termos">{t('landing.footer.terms')}</Link>
+          <span aria-hidden="true">·</span>
+          <Link href="/excluir-conta">{t('landing.footer.deletion')}</Link>
         </nav>
       </div>
     </footer>

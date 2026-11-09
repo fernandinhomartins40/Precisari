@@ -240,7 +240,10 @@ export function LoginFlow() {
           )}
         </div>
         <p className={s.legal}>
-          <Link href="/termos">{t('login.legal')}</Link>
+          {t('login.legalPrefix')}
+          <Link href="/termos">{t('login.legalTerms')}</Link>
+          {t('login.legalAnd')}
+          <Link href="/privacidade">{t('login.legalPrivacy')}</Link>.
         </p>
       </main>
     </div>

@@ -169,6 +169,7 @@ export const ptBR = {
     footer: {
       privacy: 'Privacidade',
       terms: 'Termos',
+      deletion: 'Excluir conta',
       copyright: '© {year} Precisari. Feito no Brasil.',
       label: 'Rodapé',
     },
@@ -176,33 +177,96 @@ export const ptBR = {
   legal: {
     privacyTitle: 'Política de Privacidade',
     termsTitle: 'Termos de Uso',
-    updated: 'Última atualização: novembro de 2026 · versão preliminar',
-    draftNotice: 'Texto provisório. A versão final será revisada pelo jurídico antes do lançamento.',
+    deletionTitle: 'Excluir sua conta e seus dados',
+    deletionMeta: 'Como excluir sua conta da Precisari, no app ou no site, e o que acontece com seus dados.',
+    deletionCta: 'Entrar para excluir minha conta',
+    updated: 'Última atualização: 9 de novembro de 2026',
     backHome: 'Voltar ao início',
     privacy: [
       {
         title: 'Quem somos',
-        body: 'A Precisari ajuda anfitriões a definir o preço de cada noite. Tratamos seus dados de acordo com a Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018).',
+        body: 'A Precisari é o serviço de sugestão de preços por noite para anfitriões, disponível no site www.precisari.com.br e nos apps para iPhone e Android. Ela é a controladora dos seus dados pessoais e os trata conforme a Lei Geral de Proteção de Dados (LGPD, Lei nº 13.709/2018). Canal de atendimento: privacidade@precisari.com.br.',
       },
       {
         title: 'Quais dados coletamos',
-        body: 'Coletamos o mínimo necessário: seu e-mail e nome, os dados do imóvel que você informa (endereço, capacidade, preços e custos) e as datas ocupadas do link de calendário (iCal) que você cola. Não coletamos dados dos seus hóspedes.',
+        body: 'Coletamos apenas o necessário para o serviço funcionar:',
+        items: [
+          'Conta: e-mail, nome (se você informar) e preferências de notificação.',
+          'Imóvel: nome, endereço, localização, capacidade, foto, preços e custos que você informa.',
+          'Calendário: o link de calendário (iCal) que você cadastra e as datas ocupadas. Não recebemos nome nem contato dos seus hóspedes.',
+          'Assinatura: plano e situação do pagamento. O CPF ou CNPJ que você informa no checkout vai direto ao processador de pagamentos, e não o guardamos. Não recebemos os dados do seu cartão.',
+          'Celular: identificador para notificações (push) e tipo de aparelho, se você ativar as notificações.',
+          'Dados técnicos: endereço IP, data e hora de acesso e as páginas da API acessadas, para segurança e prevenção de fraude.',
+          'Registros de aceite: versão dos termos e da política aceita, com data.',
+        ],
       },
       {
-        title: 'Para que usamos',
-        body: 'Para calcular sugestões de preço, enviar o código de login, notificações que você ativou e o resumo semanal por e-mail. Não vendemos seus dados.',
+        title: 'Para que usamos e com qual base legal',
+        items: [
+          'Para prestar o serviço (calcular e explicar sugestões de preço, enviar o código de login e o resumo semanal, processar a assinatura): execução de contrato (art. 7º, V).',
+          'Para segurança, prevenção de fraude e melhoria do serviço: legítimo interesse (art. 7º, IX).',
+          'Para cumprir obrigações fiscais e legais, como registros de acesso: obrigação legal (art. 7º, II).',
+          'Para enviar notificações push: seu consentimento, que você pode retirar a qualquer momento nos ajustes do app ou do celular (art. 7º, I).',
+        ],
+      },
+      {
+        title: 'Como as sugestões são geradas',
+        body: 'O preço é calculado por regras fixas, sempre dentro dos limites mínimo e máximo que você define. Inteligência artificial pode ser usada para classificar eventos e redigir as explicações, mas nunca para definir o preço. Você decide o que aplicar e pode pedir a revisão de uma decisão automatizada pelo nosso canal (art. 20).',
       },
       {
         title: 'Com quem compartilhamos',
-        body: 'Com fornecedores que operam o serviço (hospedagem, e-mail, pagamentos, mapas e clima), sempre com contrato e apenas o necessário. Links de calendário são guardados de forma criptografada.',
+        body: 'Não vendemos seus dados nem os usamos para publicidade. Compartilhamos somente o necessário com os fornecedores que operam o serviço, que devem protegê-los da mesma forma:',
+        items: [
+          'Hostinger: hospedagem dos servidores e do banco de dados.',
+          'VeloMail: envio de e-mails (seu endereço e o conteúdo da mensagem).',
+          'Asaas: processamento de pagamentos (nome, e-mail, CPF ou CNPJ e dados da assinatura).',
+          'Expo, Apple e Google: entrega de notificações push.',
+          'Open-Meteo: previsão do tempo (somente a localização do imóvel, sem identificar você).',
+          'BrasilAPI: lista de feriados (nenhum dado pessoal).',
+          'Google Maps, quando a busca de endereço estiver ativa: endereço do imóvel.',
+          'Anthropic, quando as explicações por IA estiverem ativas: dados do imóvel e da sugestão usados na explicação.',
+          'Channex, somente se você conectar a aplicação automática de preços: imóvel e preços.',
+        ],
+      },
+      {
+        title: 'Transferência internacional',
+        body: 'Alguns desses fornecedores podem tratar dados fora do Brasil. Nesses casos, adotamos as salvaguardas previstas nos arts. 33 a 36 da LGPD.',
+      },
+      {
+        title: 'Por quanto tempo guardamos',
+        items: [
+          'Conta, imóveis, calendários e sugestões: enquanto a conta existir. A exclusão da conta apaga esses dados na hora.',
+          'Códigos de login: apagados até 2 dias depois de expirarem.',
+          'Sessões: apagadas quando expiram ou na exclusão da conta.',
+          'Registros de acesso: até 6 meses (Marco Civil da Internet, art. 15).',
+          'Dados de pagamento e fiscais, no Asaas: pelo prazo exigido pela legislação fiscal, em geral 5 anos.',
+          'Registros de aceite e de exclusão, sem seu nome e e-mail: pelo tempo necessário para comprovar o cumprimento da lei e defender direitos (art. 16).',
+        ],
       },
       {
         title: 'Seus direitos',
-        body: 'Você pode acessar, corrigir, exportar e excluir seus dados a qualquer momento em Conta e plano. A exclusão da conta apaga seus imóveis e recomendações.',
+        body: 'A LGPD (art. 18) garante a você: confirmar que tratamos seus dados, acessá-los, corrigi-los, pedir anonimização, bloqueio ou eliminação, portabilidade, saber com quem compartilhamos, ser informado sobre não consentir e retirar seu consentimento. Você também pode reclamar à Autoridade Nacional de Proteção de Dados (ANPD).',
+        items: [
+          'Corrigir e exportar: em Conta e plano, no app ou no site.',
+          'Excluir: em Conta e plano, ou seguindo as instruções em www.precisari.com.br/excluir-conta.',
+          'Outros pedidos: escreva para privacidade@precisari.com.br. Respondemos em até 15 dias.',
+        ],
       },
       {
-        title: 'Contato',
-        body: 'Dúvidas sobre privacidade: privacidade@precisari.com.br.',
+        title: 'Segurança',
+        body: 'Usamos conexão criptografada (HTTPS), guardamos os links de calendário de forma criptografada, não usamos senhas (o login é feito por código temporário) e limitamos o acesso aos dados. Se houver um incidente com risco relevante, avisaremos você e a ANPD.',
+      },
+      {
+        title: 'Cookies e armazenamento local',
+        body: 'Não usamos cookies de publicidade nem ferramentas de rastreamento. O site guarda no seu navegador apenas o necessário para funcionar: sua sessão, o tema e o imóvel selecionado. Os apps não rastreiam você em outros apps ou sites.',
+      },
+      {
+        title: 'Menores de idade',
+        body: 'A Precisari é destinada a maiores de 18 anos, e não coletamos dados de crianças e adolescentes de forma intencional.',
+      },
+      {
+        title: 'Mudanças nesta política',
+        body: 'Quando houver mudança relevante, avisaremos por e-mail ou no app antes de ela valer. A data no início desta página mostra a última atualização.',
       },
     ],
     terms: [
@@ -212,7 +276,7 @@ export const ptBR = {
       },
       {
         title: 'Sua conta',
-        body: 'O acesso é feito com código enviado ao seu e-mail. Mantenha seu e-mail seguro; você é responsável pelas ações feitas na sua conta.',
+        body: 'Para usar a Precisari, você precisa ter pelo menos 18 anos. O acesso é feito com código enviado ao seu e-mail. Mantenha seu e-mail seguro; você é responsável pelas ações feitas na sua conta.',
       },
       {
         title: 'Seus limites',
@@ -220,11 +284,58 @@ export const ptBR = {
       },
       {
         title: 'Planos e pagamento',
-        body: 'O plano Grátis não tem custo. Planos pagos são cobrados por imóvel, por mês ou por ano, via Pix, cartão ou boleto, e podem ser cancelados a qualquer momento.',
+        body: 'O plano Grátis não tem custo. Planos pagos são contratados no site e cobrados por imóvel, por mês ou por ano, via Pix, cartão ou boleto, com renovação automática e 14 dias de teste na primeira contratação.',
+      },
+      {
+        title: 'Cancelamento e arrependimento',
+        body: 'Você pode cancelar a qualquer momento pelo canal privacidade@precisari.com.br ou excluindo sua conta. O acesso continua até o fim do período já pago. Em até 7 dias após a contratação, você pode desistir e receber de volta o valor pago (Código de Defesa do Consumidor, art. 49).',
+      },
+      {
+        title: 'Exclusão da conta',
+        body: 'Você pode excluir sua conta quando quiser, no app, no site ou como explicado em www.precisari.com.br/excluir-conta. A exclusão cancela assinaturas ativas e não pode ser desfeita.',
       },
       {
         title: 'Uso aceitável',
         body: 'Não use a Precisari para fins ilegais ou para violar os termos de outras plataformas. Não fazemos scraping de sites de terceiros.',
+      },
+      {
+        title: 'Privacidade e contato',
+        body: 'O tratamento dos seus dados está descrito na Política de Privacidade. Dúvidas: privacidade@precisari.com.br. Estes termos seguem as leis brasileiras.',
+      },
+    ],
+    deletion: [
+      {
+        title: 'Pelo app da Precisari',
+        items: ['Abra o app e entre na sua conta.', 'Toque em Conta e plano.', 'Em Privacidade, toque em Excluir conta e confirme.'],
+      },
+      {
+        title: 'Pelo site',
+        items: ['Entre em www.precisari.com.br com seu e-mail.', 'Abra Conta e plano.', 'Clique em Excluir conta e confirme.'],
+      },
+      {
+        title: 'Por e-mail',
+        body: 'Sem acesso à conta? Escreva de o mesmo e-mail cadastrado para privacidade@precisari.com.br, com o assunto "Excluir minha conta". Respondemos em até 15 dias.',
+      },
+      {
+        title: 'O que é apagado',
+        body: 'Na hora da exclusão, apagamos ou anonimizamos:',
+        items: [
+          'Seu nome e e-mail.',
+          'Seus imóveis, calendários, reservas importadas, preços, sugestões e resultados.',
+          'Suas sessões, identificadores de notificação e códigos de login.',
+        ],
+      },
+      {
+        title: 'O que é cancelado',
+        body: 'Sua assinatura é cancelada no processador de pagamentos, e nenhuma nova cobrança é gerada. Valores já pagos seguem as regras dos Termos de Uso.',
+      },
+      {
+        title: 'O que fica guardado, e por quê',
+        items: [
+          'Registro anônimo de que a exclusão e os aceites ocorreram, sem seu nome e e-mail, para comprovar o cumprimento da lei.',
+          'Registros de acesso, por até 6 meses (Marco Civil da Internet).',
+          'Dados fiscais e de pagamento no Asaas, pelo prazo exigido pela legislação, em geral 5 anos.',
+        ],
       },
     ],
   },
@@ -257,7 +368,10 @@ export const ptBR = {
     codeExpired: 'Esse código expirou. Peça um novo.',
     tooMany: 'Muitas tentativas. Peça um novo código.',
     mockHint: 'Modo demonstração: use qualquer código de 6 dígitos, ex.: 123456.',
-    legal: 'Ao entrar, você concorda com os Termos e a Política de Privacidade.',
+    legalPrefix: 'Ao entrar, você concorda com os ',
+    legalTerms: 'Termos de Uso',
+    legalAnd: ' e a ',
+    legalPrivacy: 'Política de Privacidade',
     sessionExpired: 'Sua sessão expirou. Entre de novo.',
   },
   shell: {
