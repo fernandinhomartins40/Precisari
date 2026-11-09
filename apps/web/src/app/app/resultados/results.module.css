@@ -1,0 +1,168 @@
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.monthNav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  padding: var(--space-1);
+}
+
+.monthLabel {
+  min-width: calc(var(--space-20) * 1.8);
+  text-align: center;
+  font-weight: var(--font-weight-label);
+}
+
+.cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.card {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  min-width: 0;
+}
+
+.hero {
+  background: var(--color-surface-inverse);
+  border-color: transparent;
+  color: var(--color-text-on-inverse);
+}
+
+.cardLabel {
+  font-weight: var(--font-weight-label);
+  color: var(--color-text-secondary);
+}
+
+.hero .cardLabel {
+  color: var(--on-inverse-soft);
+}
+
+.cardValue {
+  font-family: var(--font-display);
+  font-size: var(--font-size-h1);
+  line-height: var(--line-height-h1);
+  font-weight: var(--font-weight-h1);
+  font-variant-numeric: tabular-nums;
+}
+
+.hero .cardValue {
+  color: var(--color-accent);
+}
+
+.cardNote {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-secondary);
+}
+
+.delta {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-caption);
+  color: var(--color-text-secondary);
+}
+
+.delta[data-dir='up'] strong {
+  color: var(--color-positive);
+}
+
+.delta[data-dir='down'] strong {
+  color: var(--color-danger);
+}
+
+.hero .delta {
+  color: var(--on-inverse-soft);
+}
+
+.hero .delta strong {
+  color: var(--color-text-on-inverse);
+}
+
+.callout {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-6);
+  background: var(--color-accent-soft);
+  border-radius: var(--radius-card);
+}
+
+.calloutIcon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--space-16);
+  height: var(--space-16);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+}
+
+.calloutText {
+  flex: 1;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.calloutText p {
+  color: var(--color-text-secondary);
+}
+
+.rate {
+  font-weight: var(--font-weight-label);
+  color: var(--color-text-primary) !important;
+}
+
+.calloutValue {
+  font-family: var(--font-display);
+  font-size: var(--font-size-number);
+  line-height: var(--line-height-number);
+  font-weight: var(--font-weight-number);
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1100px) {
+  .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .callout {
+    flex-wrap: wrap;
+    padding: var(--space-5);
+  }
+  .calloutValue {
+    font-size: var(--font-size-display);
+  }
+  .cards {
+    gap: var(--space-3);
+  }
+  .card {
+    padding: var(--space-4);
+  }
+  .cardValue {
+    font-size: var(--font-size-h2);
+  }
+}

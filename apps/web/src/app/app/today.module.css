@@ -1,0 +1,313 @@
+.page {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: var(--space-8);
+  max-width: calc(var(--space-20) * 15);
+  align-items: start;
+}
+
+.mainCol,
+.sideCol {
+  display: grid;
+  gap: var(--space-6);
+  min-width: 0;
+}
+
+.sideCol {
+  position: sticky;
+  top: calc(var(--layout-topbar) + var(--space-6));
+  padding-top: var(--space-2);
+}
+
+.greeting h1 {
+  font-size: var(--font-size-display);
+  line-height: var(--line-height-display);
+  font-weight: var(--font-weight-display);
+  letter-spacing: var(--letter-spacing-display);
+}
+
+.greeting p {
+  margin-top: var(--space-1);
+  font-size: var(--font-size-body-lg);
+  color: var(--color-text-secondary);
+}
+
+/* Navy summary with the diagonal cut from the native reference. */
+.summary {
+  position: relative;
+  background: var(--color-surface-inverse);
+  color: var(--color-text-on-inverse);
+  border-radius: var(--radius-card);
+  padding: var(--space-6) var(--space-8);
+  clip-path: polygon(0 0, 100% 0, 100% 52%, 86% 100%, 0 100%);
+  display: grid;
+  gap: var(--space-1);
+}
+
+.summaryTitle {
+  color: var(--color-text-on-inverse);
+  font-size: var(--font-size-h3);
+  line-height: var(--line-height-h3);
+}
+
+.summaryValue {
+  font-family: var(--font-display);
+  font-size: calc(var(--font-size-number) * 1.6);
+  line-height: 1;
+  font-weight: var(--font-weight-number);
+  letter-spacing: calc(var(--letter-spacing-number) * 2);
+  color: var(--color-accent);
+  font-variant-numeric: tabular-nums;
+  margin: var(--space-2) 0;
+  animation: glow var(--duration-glow) var(--ease-emphasized) both;
+}
+
+.summarySkeleton {
+  margin: var(--space-2) 0;
+  opacity: 0.3;
+}
+
+.summaryCount {
+  font-weight: var(--font-weight-h3);
+  font-size: var(--font-size-h3);
+  font-family: var(--font-display);
+}
+
+.summaryNote {
+  font-size: var(--font-size-label);
+  color: var(--on-inverse-soft);
+}
+
+@keyframes glow {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-2));
+    filter: brightness(1.6);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+.stackHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.position {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body-lg);
+  font-variant-numeric: tabular-nums;
+}
+
+.stack {
+  position: relative;
+  display: grid;
+}
+
+.stack > * {
+  grid-area: 1 / 1;
+}
+
+.behind {
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-card);
+  transform: translateY(calc(var(--space-3) * var(--d))) scale(calc(1 - 0.04 * var(--d)));
+  transform-origin: bottom center;
+  opacity: calc(1 - 0.3 * var(--d));
+}
+
+.behind[data-depth='1'] {
+  --d: 1;
+}
+
+.behind[data-depth='2'] {
+  --d: 2;
+}
+
+.dots {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-8);
+}
+
+.dots span {
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-border-strong);
+}
+
+.dots span[data-active] {
+  background: var(--color-accent);
+  width: var(--space-6);
+}
+
+.hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  font-size: var(--font-size-caption);
+  color: var(--color-text-secondary);
+}
+
+.empty {
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-card);
+}
+
+.propertyCard {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  text-decoration: none;
+  box-shadow: var(--shadow-card);
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.propertyCard:hover {
+  transform: translateY(-2px);
+}
+
+.propertyText {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.propertyText strong {
+  font-family: var(--font-display);
+  font-size: var(--font-size-h3);
+  line-height: var(--line-height-h3);
+}
+
+.propertyText span {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body-lg);
+}
+
+.week {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.weekList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.weekDay a {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  padding: var(--space-3) 0;
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  text-decoration: none;
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.weekDay a:hover {
+  transform: translateY(-2px);
+}
+
+.weekDay[data-heat='high'] a {
+  background: var(--color-heat-2);
+  border-color: transparent;
+}
+
+.weekDay[data-booked] a {
+  background: var(--color-booked);
+  color: var(--color-booked-text);
+  border-color: transparent;
+}
+
+.weekName {
+  font-size: var(--font-size-caption);
+  letter-spacing: 0.04em;
+  font-weight: var(--font-weight-caption);
+}
+
+.weekPrice {
+  font-weight: var(--font-weight-h3);
+  font-size: var(--font-size-caption);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.weekBooked {
+  display: grid;
+  place-items: center;
+  height: var(--line-height-caption);
+}
+
+@media (max-width: 1279px) {
+  .page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    max-width: calc(var(--space-20) * 9);
+  }
+  .mainCol,
+  .sideCol {
+    display: contents;
+  }
+  .mainCol > *,
+  .sideCol > * {
+    width: 100%;
+  }
+  .greeting {
+    order: 1;
+  }
+  .propertyCard {
+    order: 2;
+  }
+  .summary {
+    order: 3;
+  }
+  .mainCol > section:last-child {
+    order: 4;
+  }
+  .week {
+    order: 5;
+  }
+}
+
+@media (max-width: 479px) {
+  .greeting h1 {
+    font-size: var(--font-size-h1);
+    line-height: var(--line-height-h1);
+  }
+  .summary {
+    padding: var(--space-5) var(--space-5) var(--space-6);
+    clip-path: polygon(0 0, 100% 0, 100% 72%, 90% 100%, 0 100%);
+  }
+  .summaryValue {
+    font-size: var(--font-size-number);
+  }
+  .weekList {
+    gap: var(--space-1);
+  }
+  .weekPrice {
+    font-size: calc(var(--font-size-caption) - 1px);
+  }
+}
