@@ -106,9 +106,9 @@ export function computeNight(state: MockPropertyState, date: string, today: stri
   if (clamped !== raw) factors.push({ key: 'limit', multiplier: clamped / raw, label: 'Seu limite' });
   let suggested = Math.min(p.maxPrice, Math.max(p.minPrice, roundPsych(clamped)));
   if (pendingAction) suggested = pendingAction.toValue;
-  const range = Math.max(1, p.maxPrice - p.minPrice);
-  const jitter = (hash(date + p.id) - 0.5) * 0.08;
-  const heat = Math.min(1, Math.max(0, (suggested - p.minPrice) / range + jitter));
+  // Heat = opportunity relative to the host's base price (0.8× → cold … 1.35× → hot).
+  const jitter = (hash(date + p.id) - 0.5) * 0.06;
+  const heat = Math.min(1, Math.max(0, (suggested / p.basePrice - 0.8) / 0.55 + jitter));
   let current = state.approved.get(date) ?? (state.demo ? suggested : p.basePrice);
   if (pendingAction) current = pendingAction.fromValue;
   const lead = daysBetween(today, date);

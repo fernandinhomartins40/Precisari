@@ -32,9 +32,12 @@ export function demandLevel(heat: number): DemandLevel {
   return 'high';
 }
 
-/** A night "has a suggestion" when it is free and suggested differs from current price, or a pending action exists. */
+/** RF-40: a suggestion exists when a pending action exists or the free night's price differs by more than 5%. */
+export const SUGGESTION_THRESHOLD = 0.05;
 export function nightHasSuggestion(n: NightDto, pendingDates: ReadonlySet<string>): boolean {
-  return pendingDates.has(n.date) || (n.status === 'free' && n.suggestedPrice !== n.currentPrice);
+  if (pendingDates.has(n.date)) return true;
+  if (n.status !== 'free' || n.currentPrice <= 0) return false;
+  return Math.abs(n.suggestedPrice - n.currentPrice) / n.currentPrice > SUGGESTION_THRESHOLD;
 }
 
 export function cellMatchesFilter(n: NightDto | null, filter: CalendarFilter, hasSuggestion: boolean): boolean {
