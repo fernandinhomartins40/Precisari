@@ -52,18 +52,14 @@ jobs:
   deploy:
     needs: [ci, build]
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: read
     steps:
       - name: Deploy to VPS
         env:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           install -d -m 700 ~/.ssh
           printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
-          printf '%s' "$GHCR_TOKEN" | ssh -o BatchMode=yes root@72.60.10.108 "$GITHUB_SHA"
+          ssh -o BatchMode=yes root@72.60.10.108 "$GITHUB_SHA"

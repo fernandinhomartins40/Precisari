@@ -1,6 +1,6 @@
 #!/bin/bash
 # Forced command of the deploy SSH key, installed at /usr/local/bin/precisari-deploy.
-# The key can only deploy a commit already on origin/main; the token arrives on stdin.
+# The key can only deploy a commit already on origin/main.
 set -euo pipefail
 
 sha="${SSH_ORIGINAL_COMMAND:-}"

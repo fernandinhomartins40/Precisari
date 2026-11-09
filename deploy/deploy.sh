@@ -1,16 +1,15 @@
 #!/bin/bash
-# Pull-only deploy. Usage: deploy.sh <release-sha>, with a GHCR token on stdin.
+# Pull-only deploy. Usage: deploy.sh <release-sha>
 set -euo pipefail
 
 release="$1"
 owner=fernandinhomartins40
 cd /opt/precisari
 
-# Private credentials store: a plain `docker login` would overwrite the ghcr.io login that
-# the other projects on this shared VPS rely on.
+# Images are public, so no login. Isolated config because root's shared one may hold another
+# project's expired ghcr.io token, and GHCR rejects even public pulls with a bad credential.
 export DOCKER_CONFIG=/opt/precisari/.docker
 mkdir -p "$DOCKER_CONFIG"
-docker login ghcr.io -u "$owner" --password-stdin
 
 # Secrets are generated once and live only here. Losing DATA_ENCRYPTION_KEY makes stored
 # iCal URLs and Channex tokens unreadable, so this file is never regenerated.
@@ -59,5 +58,3 @@ docker images --format '{{.Repository}}:{{.Tag}}' \
   | grep -E "^ghcr\.io/$owner/precisari-(api|web):" \
   | grep -vE ":($release${previous:+|$previous})$" \
   | xargs -r docker rmi >/dev/null 2>&1 || true
-
-docker logout ghcr.io >/dev/null
