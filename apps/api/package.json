@@ -25,6 +25,7 @@
     "@nestjs/platform-express": "^11.1.6",
     "@nestjs/swagger": "^11.2.0",
     "@nestjs/throttler": "^6.4.0",
+    "@precisari/design-tokens": "workspace:*",
     "@precisari/pricing-engine": "workspace:*",
     "@precisari/shared": "workspace:*",
     "@prisma/client": "^6.19.0",

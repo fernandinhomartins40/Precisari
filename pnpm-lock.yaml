@@ -53,6 +53,9 @@ importers:
       '@nestjs/throttler':
         specifier: ^6.4.0
         version: 6.7.1(@nestjs/common@11.2.8(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.2.8)(reflect-metadata@0.2.2)
+      '@precisari/design-tokens':
+        specifier: workspace:*
+        version: link:../../packages/design-tokens
       '@precisari/pricing-engine':
         specifier: workspace:*
         version: link:../../packages/pricing-engine
