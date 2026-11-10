@@ -131,32 +131,79 @@ jobs:
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath "$RUNNER_TEMP/dd" CODE_SIGNING_ALLOWED=NO build | xcbeautify --renderer github-actions
           cd "$RUNNER_TEMP/dd/Build/Products/Release-iphonesimulator" && zip -qry "$RUNNER_TEMP/Precisari-simulator.zip" Precisari.app
-      - name: Archive + export IPA (automatic signing with the App Store Connect API key)
+      # A development profile needs a registered device, so we sign for distribution only: a short-lived
+      # certificate + App Store profile created through the API and revoked at the end of the job.
+      - name: Distribution certificate + App Store profile
+        if: env.IOS_MODE == 'signed'
+        env:
+          ASC_KEY_PATH: /Users/runner/.appstoreconnect/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
+        run: |
+          S="$RUNNER_TEMP/signing"
+          node .github/scripts/asc-signing.cjs create br.com.precisari.app "$S"
+          P12_PASS=$(openssl rand -hex 16)
+          openssl x509 -inform DER -in "$S/cert.cer" -out "$S/cert.pem"
+          openssl pkcs12 -export -legacy -inkey "$S/key.pem" -in "$S/cert.pem" -out "$S/dist.p12" -passout pass:$P12_PASS
+          KC="$RUNNER_TEMP/build.keychain-db"; KC_PASS=$(openssl rand -hex 16)
+          security create-keychain -p "$KC_PASS" "$KC"
+          security set-keychain-settings -lut 21600 "$KC"
+          security unlock-keychain -p "$KC_PASS" "$KC"
+          security import "$S/dist.p12" -P "$P12_PASS" -A -t cert -f pkcs12 -k "$KC"
+          security set-key-partition-list -S apple-tool:,apple: -k "$KC_PASS" "$KC" >/dev/null
+          security list-keychains -d user -s "$KC" $(security list-keychains -d user | tr -d '"')
+          UUID=$(node -p "require('$S/ids.json').profileUuid")
+          for d in ~/Library/MobileDevice/Provisioning\ Profiles ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles; do
+            mkdir -p "$d"; cp "$S/profile.mobileprovision" "$d/$UUID.mobileprovision"
+          done
+          echo "PROFILE_NAME=$(node -p "require('$S/ids.json').profileName")" >> "$GITHUB_ENV"
+      - name: Archive + export IPA
         if: env.IOS_MODE == 'signed'
         working-directory: apps/mobile/ios
         run: |
           set -o pipefail
-          KEY=~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
-          AUTH="-allowProvisioningUpdates -authenticationKeyPath $KEY -authenticationKeyID $ASC_KEY_ID -authenticationKeyIssuerID $ASC_ISSUER_ID"
+          # Manual distribution signing on the app target only (Pods stay unsigned).
+          ruby -e '
+            require "xcodeproj"
+            p = Xcodeproj::Project.open("Precisari.xcodeproj")
+            p.targets.find { |t| t.name == "Precisari" }.build_configurations.each do |c|
+              s = c.build_settings
+              s["CODE_SIGN_STYLE"] = "Manual"
+              s["DEVELOPMENT_TEAM"] = ENV["APPLE_TEAM_ID"]
+              s["CODE_SIGN_IDENTITY"] = "Apple Distribution"
+              s["PROVISIONING_PROFILE_SPECIFIER"] = ENV["PROFILE_NAME"]
+            end
+            p.save'
+          # Store builds use the production push environment.
+          ENT=Precisari/Precisari.entitlements
+          if [ -f "$ENT" ] && /usr/libexec/PlistBuddy -c 'Print :aps-environment' "$ENT" >/dev/null 2>&1; then
+            /usr/libexec/PlistBuddy -c 'Set :aps-environment production' "$ENT"
+          fi
           xcodebuild -workspace Precisari.xcworkspace -scheme Precisari -configuration Release \
-            -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/Precisari.xcarchive" \
-            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CODE_SIGN_STYLE=Automatic $AUTH archive | xcbeautify --renderer github-actions
+            -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/Precisari.xcarchive" archive | xcbeautify --renderer github-actions
           cat > "$RUNNER_TEMP/ExportOptions.plist" <<EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0"><dict>
             <key>method</key><string>app-store-connect</string>
             <key>teamID</key><string>${APPLE_TEAM_ID}</string>
-            <key>signingStyle</key><string>automatic</string>
+            <key>signingStyle</key><string>manual</string>
+            <key>signingCertificate</key><string>Apple Distribution</string>
+            <key>provisioningProfiles</key><dict><key>br.com.precisari.app</key><string>${PROFILE_NAME}</string></dict>
             <key>destination</key><string>export</string>
           </dict></plist>
           EOF
           xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/Precisari.xcarchive" \
-            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export" $AUTH
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export"
           ls -la "$RUNNER_TEMP/export"
       - name: Upload to TestFlight
         if: env.IOS_MODE == 'signed' && (inputs.upload_testflight || github.event_name == 'push')
         run: xcrun altool --upload-app -f "$RUNNER_TEMP"/export/*.ipa -t ios --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
+      - name: Revoke CI signing assets
+        if: always() && env.IOS_MODE == 'signed'
+        env:
+          ASC_KEY_PATH: /Users/runner/.appstoreconnect/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
+        run: |
+          node .github/scripts/asc-signing.cjs cleanup "$RUNNER_TEMP/signing"
+          security delete-keychain "$RUNNER_TEMP/build.keychain-db" 2>/dev/null || true
       - uses: actions/upload-artifact@v4
         with:
           name: precisari-ios-${{ env.IOS_MODE }}-${{ github.run_number }}
