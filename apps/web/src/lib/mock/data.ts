@@ -52,6 +52,8 @@ export interface MockDb {
   holidays: HolidayDto[];
   vacations: SchoolVacationDto[];
   checkouts: MockCheckout[];
+  /** Demo Airbnb links: propertyId → linked at (ISO). Optional so saved demo DBs keep loading. */
+  channex?: Record<string, string>;
 }
 
 export const MOCK_DB_VERSION = 3;

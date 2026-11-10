@@ -13,6 +13,8 @@ import {
   AuthSession,
   AuthTokens,
   CalendarSourceDto,
+  ChannexConnectDto,
+  ChannexStatusDto,
   CheckoutDto,
   EventDto,
   HolidayDto,
@@ -221,6 +223,13 @@ export class PrecisariClient {
     plans: () => this.req(z.array(PlanDto), 'GET', routes.billingPlans, { auth: false }),
     checkout: (body: CheckoutBody, idempotencyKey = randomKey()) =>
       this.req(CheckoutDto, 'POST', routes.billingCheckout, { body, idempotencyKey }),
+  };
+
+  // ---------- Airbnb via Channex ----------
+  channex = {
+    status: (propertyId: string) => this.req(ChannexStatusDto, 'GET', routes.channexProperty(propertyId)),
+    connect: (propertyId: string) => this.req(ChannexConnectDto, 'POST', routes.channexConnect, { body: { propertyId } }),
+    disconnect: (propertyId: string) => this.req(ChannexStatusDto, 'DELETE', routes.channexProperty(propertyId)),
   };
 
   // ---------- admin ----------

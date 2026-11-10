@@ -5,6 +5,7 @@
  */
 import {
   API_PREFIX,
+  ChannexConnectBody,
   CheckoutBody,
   ConnectCalendarBody,
   CreatePropertyBody,
@@ -20,6 +21,7 @@ import {
   routes,
   type ActionDto,
   type ActionStatus,
+  type ChannexStatusDto,
   type CheckoutDto,
   type NightsResponse,
   type PropertyDto,
@@ -111,6 +113,11 @@ function findProperty(ctx: Ctx): PropertyDto {
   const p = ctx.db.properties.find((x) => x.id === ctx.params.id);
   if (!p) throw new HttpError(404, ErrorCode.NOT_FOUND, 'Imóvel não encontrado');
   return p;
+}
+
+function channexStatus(ctx: Ctx, propertyId: string): ChannexStatusDto {
+  const at = ctx.db.channex?.[propertyId];
+  return { propertyId, state: at ? 'LINKED' : 'DISCONNECTED', lastSyncAt: at ?? null, lastError: null };
 }
 
 function issueTokens(ctx: Ctx) {
@@ -503,6 +510,34 @@ const handlers: [string, string, Handler][] = [
         expiresAt: new Date(ctx.nowMs + 30 * 60_000).toISOString(),
       };
       return json(201, dto);
+    },
+  ],
+
+  // ---- Airbnb via Channex (demo: linking succeeds at once) ----
+  [
+    'GET',
+    routes.channexProperty(':id'),
+    (ctx) => (requireUser(ctx), json(200, channexStatus(ctx, findProperty(ctx).id))),
+  ],
+  [
+    'POST',
+    routes.channexConnect,
+    (ctx) => {
+      requireUser(ctx);
+      const { propertyId } = parse(ChannexConnectBody, ctx.body);
+      if (!ctx.db.properties.some((x) => x.id === propertyId)) throw new HttpError(404, ErrorCode.NOT_FOUND, 'Imóvel não encontrado');
+      (ctx.db.channex ??= {})[propertyId] = new Date(ctx.nowMs).toISOString();
+      return json(200, { ...channexStatus(ctx, propertyId), connectUrl: `${ctx.origin}/app/imoveis/${propertyId}` });
+    },
+  ],
+  [
+    'DELETE',
+    routes.channexProperty(':id'),
+    (ctx) => {
+      requireUser(ctx);
+      const id = findProperty(ctx).id;
+      if (ctx.db.channex) delete ctx.db.channex[id];
+      return json(200, channexStatus(ctx, id));
     },
   ],
 

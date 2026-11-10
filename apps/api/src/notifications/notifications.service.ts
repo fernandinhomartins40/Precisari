@@ -197,7 +197,7 @@ export class NotificationsService implements OnModuleInit {
     }
     // 2) Alert current breaks.
     const errored = await this.prisma.calendarSource.findMany({
-      where: { status: 'ERROR', property: { deletedAt: null } },
+      where: { type: 'ICAL', status: 'ERROR', property: { deletedAt: null } },
       select: { id: true, property: { select: { id: true, name: true, userId: true } } },
     });
     let alerts = 0;

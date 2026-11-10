@@ -12,6 +12,7 @@ import { qk, useProperty, useUpdateProperty } from '@/lib/queries';
 import { Button } from '@/components/ui/button';
 import { Dialog, EmptyState, Field, Segmented, Skeleton, Switch } from '@/components/ui/primitives';
 import { useToast } from '@/components/ui/toast';
+import { AirbnbLink } from '@/components/app/airbnb-link';
 import { PropertyPhoto } from '@/components/app/property-selector';
 import { SyncBadge, SyncButton } from '@/components/app/sync-status';
 import p from '@/components/app/page.module.css';
@@ -195,6 +196,8 @@ function Form({ property }: { property: PropertyDto }) {
           </>
         )}
       </section>
+
+      <AirbnbLink propertyId={property.id} />
 
       <section className={[p.section, p.danger].join(' ')} aria-labelledby="danger">
         <div className={p.sectionHead}>

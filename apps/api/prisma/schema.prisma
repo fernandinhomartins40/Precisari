@@ -215,6 +215,12 @@ model CalendarSource {
   contentHash       String?
   channexPropertyId String?
   channexTokenEnc   String?
+  channexRoomTypeId String?
+  channexRatePlanId String?
+  /// Set once Channex reports an active Airbnb channel on the property.
+  channexLinkedAt   DateTime?
+  /// Last pushed { "yyyy-mm-dd": "priceCents/minStay" } — only changed nights are sent again.
+  channexPushed     Json?
   lastSyncAt        DateTime?
   status            CalendarSourceStatus @default(PENDING)
   lastError         String?

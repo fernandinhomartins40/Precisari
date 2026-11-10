@@ -89,7 +89,37 @@ export interface BillingProvider extends IntegrationAdapter {
 // ---------- Channel manager (Channex, phase 2) ----------
 export const CHANNEX_PROVIDER = Symbol('CHANNEX_PROVIDER');
 export interface ChannexRate { date: string; priceCents: number; minStay: number }
+export interface ChannexIds { channexPropertyId: string; roomTypeId: string; ratePlanId: string }
+export interface ChannexConnectInput {
+  propertyId: string;
+  title: string;
+  currency: 'BRL';
+  timezone: string;
+  capacity: number;
+  basePriceCents: number;
+  /** Booking webhook: Channex calls `url` with header `x-precisari-secret: secret`. */
+  webhook: { url: string; secret: string };
+}
+/** One booking revision from Channex's feed (new / modified / cancelled). */
+export interface ChannexBookingRevision {
+  id: string;
+  channexPropertyId: string;
+  bookingId: string;
+  status: 'new' | 'modified' | 'cancelled';
+  arrivalDate: string;
+  departureDate: string;
+  amountCents: number | null;
+}
 export interface ChannexProvider extends IntegrationAdapter {
-  connectProperty(input: { propertyId: string; title: string; currency: 'BRL'; timezone: string }): Promise<{ channexPropertyId: string }>;
-  pushRates(channexPropertyId: string, rates: ChannexRate[]): Promise<void>;
+  /** Creates the property, its single room type and rate plan, and the booking webhook. */
+  connectProperty(input: ChannexConnectInput): Promise<ChannexIds>;
+  /** Short-lived URL of Channex's embedded screen where the host links their Airbnb listing. */
+  connectUrl(channexPropertyId: string, username: string): Promise<string>;
+  /** True once a channel (Airbnb) is active on the property. */
+  hasActiveChannel(channexPropertyId: string): Promise<boolean>;
+  pushRates(ids: Pick<ChannexIds, 'channexPropertyId' | 'ratePlanId'>, rates: ChannexRate[]): Promise<void>;
+  /** Unacknowledged booking revisions (all properties), up to one page. */
+  bookingRevisions(): Promise<ChannexBookingRevision[]>;
+  ackRevision(id: string): Promise<void>;
+  deleteProperty(channexPropertyId: string): Promise<void>;
 }

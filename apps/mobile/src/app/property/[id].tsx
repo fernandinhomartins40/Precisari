@@ -12,6 +12,7 @@ import { useDeleteProperty, useSyncProperty, useUpdateProperty } from '@/lib/hoo
 import { confirmAsync, haptic } from '@/lib/platform';
 import { qk } from '@/lib/query';
 import { useSelectedProperty } from '@/lib/selected-property';
+import { AirbnbLink } from '@/components/airbnb-link';
 import { PropertyCard } from '@/components/blocks';
 import { Skeleton } from '@/components/feedback';
 import { MoneyField, ToggleRow } from '@/components/inputs';
@@ -170,6 +171,10 @@ function SettingsForm({ property }: { property: PropertyDto }) {
             {syncMsg}
           </AppText>
         ) : null}
+      </Group>
+
+      <Group title={t('airbnb.title')}>
+        <AirbnbLink propertyId={property.id} />
       </Group>
 
       <Button kind="danger" icon={Trash2} label={t('settings.delete')} onPress={remove} loading={del.isPending} />

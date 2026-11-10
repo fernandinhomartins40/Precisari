@@ -10,6 +10,7 @@ export const QUEUES = {
   notificationsWeekly: 'notifications.weekly',
   insightsMonthly: 'insights.monthly',
   channexPush: 'channex.push',
+  channexBookings: 'channex.bookings',
   retentionPurge: 'retention.purge',
 } as const;
 export type QueueName = (typeof QUEUES)[keyof typeof QUEUES];
@@ -25,6 +26,8 @@ export interface JobPayloads {
   'notifications.daily': { userId?: string };
   'notifications.weekly': { userId?: string };
   'insights.monthly': { month?: string };
-  'channex.push': { actionId?: string; propertyId?: string };
+  /** No propertyId ⇒ daily full sync of every linked property. */
+  'channex.push': { propertyId?: string };
+  'channex.bookings': Record<string, never>;
   'retention.purge': Record<string, never>;
 }

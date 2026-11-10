@@ -43,7 +43,8 @@ export function toPropertyDto(p: PropertyWithSources): PropertyDto {
     timezone: p.timezone,
     listingUrl: p.listingUrl,
     photoUrl: p.photoUrl,
-    calendarSources: p.calendarSources.map(toCalendarSourceDto),
+    // iCal only: the Airbnb link (Channex) has its own status endpoint, and clients treat these as the iCal feed.
+    calendarSources: p.calendarSources.filter((s) => s.type === 'ICAL').map(toCalendarSourceDto),
     createdAt: p.createdAt.toISOString(),
   };
 }

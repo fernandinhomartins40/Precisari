@@ -47,3 +47,19 @@ export const BillingWebhookEvent = z.object({
   currentPeriodEnd: Timestamp.optional(),
 });
 export type BillingWebhookEvent = z.infer<typeof BillingWebhookEvent>;
+
+/** Airbnb link through Channex (plans PRO/AUTO). PENDING_LINK: provisioned, host still has to authorize Airbnb. */
+export const ChannexState = z.enum(['DISCONNECTED', 'PENDING_LINK', 'LINKED']);
+export type ChannexState = z.infer<typeof ChannexState>;
+export const ChannexStatusDto = z.object({
+  propertyId: z.string(),
+  state: ChannexState,
+  lastSyncAt: Timestamp.nullable(),
+  lastError: z.string().nullable(),
+});
+export type ChannexStatusDto = z.infer<typeof ChannexStatusDto>;
+/** connectUrl: Channex's embedded screen (one-time, ~15 min) where the host signs in to Airbnb. */
+export const ChannexConnectDto = ChannexStatusDto.extend({ connectUrl: z.string().url() });
+export type ChannexConnectDto = z.infer<typeof ChannexConnectDto>;
+export const ChannexConnectBody = z.object({ propertyId: z.string().min(1) });
+export type ChannexConnectBody = z.infer<typeof ChannexConnectBody>;

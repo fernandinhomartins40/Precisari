@@ -4,6 +4,7 @@ import { ENGINE_VERSION, computeRecommendations, type NightRecommendation } from
 import { sha256 } from '../common/crypto';
 import { addDays, dateToIso, isoToDate, todayInTz } from '../common/dates';
 import { PlanService } from '../common/plan.service';
+import { enqueueChannexPush } from '../billing/channex.service';
 import { JobQueueService } from '../jobs/job-queue.service';
 import { JobsRegistry } from '../jobs/jobs.registry';
 import { QUEUES } from '../jobs/queues';
@@ -77,6 +78,8 @@ export class PricingService implements OnModuleInit {
     if (actions.created + actions.updated > 0 || changedNights > 0) {
       await this.jobs.enqueue(QUEUES.explanationsGenerate, { propertyId }, { jobId: `explain:${propertyId}` });
     }
+    // AUTO plan applies new suggestions on push; other plans only resend what changed (no-op when not linked).
+    if (actions.created + actions.updated > 0) await enqueueChannexPush(this.jobs, propertyId);
     this.logger.debug({ propertyId, nights: recs.length, changedNights, engineMs, actions }, 'recomputed');
     return { propertyId, nights: recs.length, changedNights, actions, today };
   }

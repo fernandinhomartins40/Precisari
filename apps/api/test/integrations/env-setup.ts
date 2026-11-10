@@ -15,5 +15,6 @@ process.env.LLM_PROVIDER = 'fake';
 process.env.PUSH_PROVIDER = 'fake';
 process.env.CHANNEX_PROVIDER = 'fake';
 process.env.BILLING_WEBHOOK_SECRET = 'test-webhook-secret';
+process.env.CHANNEX_WEBHOOK_SECRET = 'test-channex-secret';
 
 export {};

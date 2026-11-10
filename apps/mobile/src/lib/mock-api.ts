@@ -20,6 +20,7 @@ import {
   type AuthSession,
   type AuthTokens,
   type CalendarSourceDto,
+  type ChannexStatusDto,
   type NightsResponse,
   type PropertyDto,
   type SyncResultDto,
@@ -108,6 +109,12 @@ export function createMockFetch(opts: MockApiOptions = {}): FetchLike {
 
   const pendingFor = (propertyId: string) =>
     new Map(db.actions.filter((a) => a.propertyId === propertyId && a.status === 'PENDING').map((a) => [a.date, a]));
+
+  const linkedAt = new Map<string, string>();
+  const channexStatus = (propertyId: string): ChannexStatusDto => {
+    const at = linkedAt.get(propertyId) ?? null;
+    return { propertyId, state: at ? 'LINKED' : 'DISCONNECTED', lastSyncAt: at, lastError: null };
+  };
 
   const getProperty = (id: string): MockPropertyState => {
     const p = db.properties.get(id);
@@ -267,6 +274,18 @@ export function createMockFetch(opts: MockApiOptions = {}): FetchLike {
       };
       const result: SyncResultDto = { status: 'OK', bookingsImported: Math.round(state.booked.size / 2.5), changed: false, lastSyncAt: now, error: null };
       return json(200, result);
+    }
+    // Airbnb via Channex (demo: linking succeeds at once).
+    if ((m = path.match(/^\/integrations\/channex\/([^/]+)$/)) && m[1] !== 'webhook' && m[1] !== 'connect') {
+      const id = getProperty(m[1] ?? '').property.id;
+      if (method === 'DELETE') linkedAt.delete(id);
+      return json(200, channexStatus(id));
+    }
+    if (method === 'POST' && path === '/integrations/channex/connect') {
+      const { propertyId } = z.object({ propertyId: z.string() }).parse(body);
+      getProperty(propertyId);
+      linkedAt.set(propertyId, new Date().toISOString());
+      return json(200, { ...channexStatus(propertyId), connectUrl: 'https://www.precisari.com.br/app/imoveis' });
     }
     if (method === 'GET' && (m = path.match(/^\/properties\/([^/]+)\/nights$/))) {
       const state = getProperty(m[1] ?? '');

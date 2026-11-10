@@ -5,6 +5,8 @@ import { ErrorCode, FactorDto, type ActionDto, type ActionsQuery, type ActionsRe
 import { AppError } from '../common/app-error';
 import { AuditService } from '../common/audit.service';
 import { dateToIso, isoToDate, todayInTz } from '../common/dates';
+import { enqueueChannexPush } from '../billing/channex.service';
+import { JobQueueService } from '../jobs/job-queue.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { fallbackExplanation } from './fallback-explanation';
 
@@ -41,6 +43,7 @@ export class ActionsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly jobs: JobQueueService,
   ) {}
 
   async list(userId: string, q: ActionsQueryInput): Promise<ActionsResponse> {
@@ -126,6 +129,8 @@ export class ActionsService {
       fromValue: action.fromValue,
       toValue: action.toValue,
     });
+    // Linked to Airbnb via Channex: the new known price goes out within seconds (no-op otherwise).
+    if (decision !== 'dismiss') await enqueueChannexPush(this.jobs, action.propertyId);
     const updated = await this.prisma.action.findUniqueOrThrow({ where: { id }, include: actionInclude });
     const [dto] = await this.toDtos([updated]);
     return dto as ActionDto;

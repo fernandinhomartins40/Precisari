@@ -47,6 +47,8 @@ export const EnvSchema = z.object({
   CHANNEX_PROVIDER: z.enum(['channex', 'fake']).default('fake'),
   CHANNEX_BASE_URL: z.string().default('https://staging.channex.io/api/v1'),
   CHANNEX_API_KEY: z.string().default(''),
+  /** Shared secret Channex sends in x-precisari-secret on booking webhooks. Empty ⇒ webhooks rejected. */
+  CHANNEX_WEBHOOK_SECRET: z.string().default(''),
   SENTRY_DSN: z.string().default(''),
   /** Seed curated data (state/municipal holidays, school vacations) and sync national holidays at boot when empty. */
   DATA_SEED_ON_BOOT: bool.default('true'),

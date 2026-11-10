@@ -8,7 +8,7 @@ import { CommonModule } from '../../src/common/common.module';
 import { IntegrationError } from '../../src/integrations/common/http';
 import { UsersModule } from '../../src/users/users.module';
 import { signFakeWebhook } from '../../src/integrations/billing/fake-billing.adapter';
-import { createProperty, createTestApp, createUser, resetDb, tokenFor, type TestApp } from './helpers';
+import { createTestApp, createUser, resetDb, tokenFor, type TestApp } from './helpers';
 
 const SECRET = 'test-webhook-secret';
 
@@ -149,33 +149,5 @@ describe('Billing API (RF-70/71/72)', () => {
     const created = await sendWebhook({ id: 'evt_004', type: 'subscription.activated', providerRef: 'sub_other', userId: other.id, plan: 'AUTO' });
     expect(created.body.applied).toBe(true);
     expect(await t.prisma.subscription.findUniqueOrThrow({ where: { userId: other.id } })).toMatchObject({ plan: 'AUTO', status: 'ACTIVE' });
-  });
-
-  it('channex connect: PRO/AUTO only, creates a CHANNEX calendar source', async () => {
-    const prop = await createProperty(t.prisma, user.id);
-    const auth = { Authorization: `Bearer ${token}` };
-    const free = await http().post('/v1/integrations/channex/connect').set(auth).send({ propertyId: prop.id });
-    expect(free.status).toBe(403);
-    expect(free.body.code).toBe('PLAN_LIMIT');
-
-    await t.prisma.subscription.create({ data: { userId: user.id, plan: 'PRO', status: 'ACTIVE' } });
-    const ok = await http().post('/v1/integrations/channex/connect').set(auth).send({ propertyId: prop.id });
-    expect(ok.status).toBe(200);
-    expect(ok.body).toEqual({ propertyId: prop.id, channexPropertyId: `fake-channex-${prop.id}`, status: 'CONNECTED' });
-    const sources = await t.prisma.calendarSource.findMany({ where: { propertyId: prop.id } });
-    expect(sources).toHaveLength(1);
-    expect(sources[0]).toMatchObject({ type: 'CHANNEX', status: 'OK', channexPropertyId: `fake-channex-${prop.id}` });
-
-    const otherUser = await createUser(t.prisma);
-    await t.prisma.subscription.create({ data: { userId: otherUser.id, plan: 'AUTO', status: 'TRIALING' } });
-    const notMine = await http().post('/v1/integrations/channex/connect').set('Authorization', `Bearer ${await tokenFor(otherUser)}`).send({ propertyId: prop.id });
-    expect(notMine.status).toBe(404);
-  });
-
-  it('channex webhook stub stores the event and returns 202', async () => {
-    const r = await http().post('/v1/integrations/channex/webhook').send({ id: 'cx_evt_1', event: 'booking_new' });
-    expect(r.status).toBe(202);
-    await http().post('/v1/integrations/channex/webhook').send({ id: 'cx_evt_1', event: 'booking_new' });
-    expect(await t.prisma.webhookEvent.count({ where: { provider: 'channex' } })).toBe(1);
   });
 });

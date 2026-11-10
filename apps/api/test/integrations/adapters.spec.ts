@@ -9,7 +9,7 @@ import { GooglePlacesGeoProvider } from '../../src/integrations/geo/google-place
 import { inferDestinationType } from '../../src/integrations/geo/destination-type';
 import { FakeGeoProvider } from '../../src/integrations/geo/geo.fake';
 import { ExpoPushProvider } from '../../src/integrations/push/expo.adapter';
-import { ChannexHttpProvider, toRanges } from '../../src/integrations/channex/channex.adapter';
+import { ChannexHttpProvider, decimalToCents, toRanges } from '../../src/integrations/channex/channex.adapter';
 import { FakeBillingProvider, signFakeWebhook } from '../../src/integrations/billing/fake-billing.adapter';
 import { IntegrationError } from '../../src/integrations/common/http';
 import { TtlCache } from '../../src/integrations/common/ttl-cache';
@@ -230,23 +230,57 @@ describe('Expo push adapter', () => {
   });
 });
 
-describe('Channex adapter (skeleton)', () => {
-  it('connects a property with user-api-key and pushes merged rate ranges', async () => {
-    const { fetchFn, calls } = mockFetch(json({ data: { id: 'cx_prop' } }), json({ data: [{ id: 'rp_1' }] }), json({ data: [] }));
-    const c = new ChannexHttpProvider('https://staging.channex.io/api/v1', 'cx-key', fetchFn);
-    const r = await c.connectProperty({ propertyId: 'p1', title: 'Casa', currency: 'BRL', timezone: 'America/Sao_Paulo' });
-    expect(r.channexPropertyId).toBe('cx_prop');
+describe('Channex adapter', () => {
+  const BASE = 'https://staging.channex.io/api/v1';
+
+  it('provisions property, room type, rate plan and webhook, then pushes merged ranges in minor units', async () => {
+    const { fetchFn, calls } = mockFetch(json({ data: { id: 'cx_prop' } }), json({ data: { id: 'rt_1' } }), json({ data: { id: 'rp_1' } }), json({ data: { id: 'wh_1' } }), json({ data: [] }));
+    const c = new ChannexHttpProvider(BASE, 'cx-key', fetchFn);
+    const ids = await c.connectProperty({
+      propertyId: 'p1', title: 'Casa', currency: 'BRL', timezone: 'America/Sao_Paulo', capacity: 4, basePriceCents: 32000,
+      webhook: { url: 'https://api.test/v1/integrations/channex/webhook', secret: 's3cret' },
+    });
+    expect(ids).toEqual({ channexPropertyId: 'cx_prop', roomTypeId: 'rt_1', ratePlanId: 'rp_1' });
+    expect(calls.map((x) => x.url)).toEqual([`${BASE}/properties`, `${BASE}/room_types`, `${BASE}/rate_plans`, `${BASE}/webhooks`]);
     expect(calls[0]?.headers['user-api-key']).toBe('cx-key');
-    await c.pushRates('cx_prop', [
+    expect(calls[2]?.body).toMatchObject({ rate_plan: { room_type_id: 'rt_1', currency: 'BRL', options: [{ occupancy: 4, rate: 32000 }] } });
+    expect(calls[3]?.body).toMatchObject({ webhook: { property_id: 'cx_prop', event_mask: 'booking', headers: { 'x-precisari-secret': 's3cret' } } });
+
+    await c.pushRates({ channexPropertyId: 'cx_prop', ratePlanId: 'rp_1' }, [
       { date: '2026-12-02', priceCents: 28900, minStay: 2 },
       { date: '2026-12-01', priceCents: 28900, minStay: 2 },
       { date: '2026-12-03', priceCents: 31900, minStay: 2 },
     ]);
-    expect(calls[2]?.url).toBe('https://staging.channex.io/api/v1/restrictions');
-    expect((calls[2]?.body as { values: unknown[] }).values).toEqual([
-      { property_id: 'cx_prop', rate_plan_id: 'rp_1', date_from: '2026-12-01', date_to: '2026-12-02', rate: '289.00', min_stay_arrival: 2 },
-      { property_id: 'cx_prop', rate_plan_id: 'rp_1', date_from: '2026-12-03', date_to: '2026-12-03', rate: '319.00', min_stay_arrival: 2 },
+    expect(calls[4]?.url).toBe(`${BASE}/restrictions`);
+    expect((calls[4]?.body as { values: unknown[] }).values).toEqual([
+      { property_id: 'cx_prop', rate_plan_id: 'rp_1', date_from: '2026-12-01', date_to: '2026-12-02', rate: 28900, min_stay_arrival: 2 },
+      { property_id: 'cx_prop', rate_plan_id: 'rp_1', date_from: '2026-12-03', date_to: '2026-12-03', rate: 31900, min_stay_arrival: 2 },
     ]);
+  });
+
+  it('builds the embedded Airbnb screen URL from a one-time token and reads channels', async () => {
+    const { fetchFn } = mockFetch(json({ data: { token: 'tok-1' } }), json({ data: [{ attributes: { is_active: false } }, { attributes: { is_active: true } }] }));
+    const c = new ChannexHttpProvider(BASE, 'k', fetchFn);
+    const url = new URL(await c.connectUrl('cx_prop', 'ana@x.com'));
+    expect(url.origin + url.pathname).toBe('https://staging.channex.io/auth/exchange');
+    expect(Object.fromEntries(url.searchParams)).toMatchObject({ oauth_session_key: 'tok-1', app_mode: 'headless', property_id: 'cx_prop', channels: 'ABB', lng: 'pt' });
+    expect(await c.hasActiveChannel('cx_prop')).toBe(true);
+  });
+
+  it('maps booking revisions and rejects malformed ones', async () => {
+    const rev = { id: 'r1', attributes: { property_id: 'cx', booking_id: 'b1', status: 'new', arrival_date: '2026-12-10', departure_date: '2026-12-12', amount: '930.5' } };
+    const c = new ChannexHttpProvider(BASE, 'k', mockFetch(json({ data: [rev] }), json({ data: [{ ...rev, attributes: { ...rev.attributes, status: 'weird' } }] })).fetchFn);
+    expect(await c.bookingRevisions()).toEqual([
+      { id: 'r1', channexPropertyId: 'cx', bookingId: 'b1', status: 'new', arrivalDate: '2026-12-10', departureDate: '2026-12-12', amountCents: 93050 },
+    ]);
+    await expect(c.bookingRevisions()).rejects.toThrow();
+  });
+
+  it('decimalToCents parses Channex amounts', () => {
+    expect(decimalToCents('1234.50')).toBe(123450);
+    expect(decimalToCents('12')).toBe(1200);
+    expect(decimalToCents('abc')).toBeNull();
+    expect(decimalToCents(null)).toBeNull();
   });
 
   it('toRanges splits non-contiguous dates', () => {

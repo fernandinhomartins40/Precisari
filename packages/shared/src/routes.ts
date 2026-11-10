@@ -27,6 +27,7 @@ export const routes = {
   billingCheckout: '/billing/checkout',
   billingWebhook: '/billing/webhook',
   channexConnect: '/integrations/channex/connect',
+  channexProperty: (propertyId: string) => `/integrations/channex/${propertyId}`,
   channexWebhook: '/integrations/channex/webhook',
   adminEvents: '/admin/events',
   adminEvent: (id: string) => `/admin/events/${id}`,
