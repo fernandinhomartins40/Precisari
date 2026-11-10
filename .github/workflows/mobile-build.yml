@@ -1,0 +1,166 @@
+name: Mobile build
+# Store builds without EAS: Expo prebuild + Gradle (Ubuntu) and Xcode (GitHub macOS runner).
+# Android: signed AAB (Play Store) + APK when the ANDROID_* secrets exist.
+# iOS: signed IPA (optionally uploaded to TestFlight) when the APPLE_* / ASC_* secrets exist;
+#      otherwise a simulator build that proves the app compiles.
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Plataforma
+        type: choice
+        options: [all, android, ios]
+        default: all
+      upload_testflight:
+        description: Enviar o IPA ao TestFlight (requer as chaves da Apple)
+        type: boolean
+        default: false
+  push:
+    tags: ['mobile-v*']
+
+concurrency:
+  group: mobile-build-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  EXPO_PUBLIC_API_MOCK: 'false'
+  EXPO_PUBLIC_API_URL: https://api.precisari.com.br
+  EXPO_PUBLIC_WEB_URL: https://www.precisari.com.br
+  APP_BUILD_NUMBER: ${{ github.run_number }}
+  EXPO_NO_TELEMETRY: '1'
+
+jobs:
+  android:
+    if: github.event_name == 'push' || inputs.platform != 'ios'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm turbo run build --filter=mobile^...
+      - name: Expo prebuild
+        working-directory: apps/mobile
+        run: npx expo prebuild --platform android --no-install --clean
+      - name: Signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          mkdir -p ~/.gradle
+          echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g" >> ~/.gradle/gradle.properties
+          if [ -z "$KEYSTORE_B64" ]; then
+            echo "::warning::ANDROID_KEYSTORE_BASE64 ausente: o build sai assinado com a chave de debug e não serve para a Play Store."
+            echo "SIGNED=unsigned" >> "$GITHUB_ENV"; exit 0
+          fi
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          # Injected signing (AGP) keeps passwords out of the command line and of the generated build.gradle.
+          {
+            echo "android.injected.signing.store.file=$RUNNER_TEMP/upload.jks"
+            echo "android.injected.signing.store.password=$STORE_PASSWORD"
+            echo "android.injected.signing.key.alias=$KEY_ALIAS"
+            echo "android.injected.signing.key.password=$KEY_PASSWORD"
+          } >> ~/.gradle/gradle.properties
+          echo "SIGNED=signed" >> "$GITHUB_ENV"
+      - name: Gradle bundleRelease + assembleRelease
+        working-directory: apps/mobile/android
+        run: ./gradlew bundleRelease assembleRelease --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: precisari-android-${{ env.SIGNED }}-${{ github.run_number }}
+          path: |
+            apps/mobile/android/app/build/outputs/bundle/release/*.aab
+            apps/mobile/android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+
+  ios:
+    if: github.event_name == 'push' || inputs.platform != 'android'
+    runs-on: macos-15
+    timeout-minutes: 90
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm turbo run build --filter=mobile^...
+      - name: Expo prebuild
+        working-directory: apps/mobile
+        run: npx expo prebuild --platform ios --no-install --clean
+      - name: CocoaPods
+        working-directory: apps/mobile/ios
+        run: pod install
+      - name: Mode
+        run: |
+          xcodebuild -version
+          if [ -n "$ASC_KEY_ID" ] && [ -n "$ASC_ISSUER_ID" ] && [ -n "$ASC_KEY_P8_BASE64" ] && [ -n "$APPLE_TEAM_ID" ]; then
+            mkdir -p ~/.appstoreconnect/private_keys
+            echo "$ASC_KEY_P8_BASE64" | base64 -d > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+            echo "IOS_MODE=signed" >> "$GITHUB_ENV"
+          else
+            echo "::warning::Chaves da Apple ausentes (ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8_BASE64, APPLE_TEAM_ID): build de verificação no simulador, sem IPA."
+            echo "IOS_MODE=simulator" >> "$GITHUB_ENV"
+          fi
+      - name: Simulator build (no signing)
+        if: env.IOS_MODE == 'simulator'
+        working-directory: apps/mobile/ios
+        run: |
+          set -o pipefail
+          xcodebuild -workspace Precisari.xcworkspace -scheme Precisari -configuration Release \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/dd" CODE_SIGNING_ALLOWED=NO build | xcbeautify --renderer github-actions
+          cd "$RUNNER_TEMP/dd/Build/Products/Release-iphonesimulator" && zip -qry "$RUNNER_TEMP/Precisari-simulator.zip" Precisari.app
+      - name: Archive + export IPA (automatic signing with the App Store Connect API key)
+        if: env.IOS_MODE == 'signed'
+        working-directory: apps/mobile/ios
+        run: |
+          set -o pipefail
+          KEY=~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+          AUTH="-allowProvisioningUpdates -authenticationKeyPath $KEY -authenticationKeyID $ASC_KEY_ID -authenticationKeyIssuerID $ASC_ISSUER_ID"
+          xcodebuild -workspace Precisari.xcworkspace -scheme Precisari -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/Precisari.xcarchive" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CODE_SIGN_STYLE=Automatic $AUTH archive | xcbeautify --renderer github-actions
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>teamID</key><string>${APPLE_TEAM_ID}</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>destination</key><string>export</string>
+          </dict></plist>
+          EOF
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/Precisari.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export" $AUTH
+          ls -la "$RUNNER_TEMP/export"
+      - name: Upload to TestFlight
+        if: env.IOS_MODE == 'signed' && (inputs.upload_testflight || github.event_name == 'push')
+        run: xcrun altool --upload-app -f "$RUNNER_TEMP"/export/*.ipa -t ios --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: precisari-ios-${{ env.IOS_MODE }}-${{ github.run_number }}
+          path: |
+            ${{ runner.temp }}/export/*.ipa
+            ${{ runner.temp }}/Precisari-simulator.zip
+          if-no-files-found: error

@@ -1,6 +1,9 @@
 import type { ExpoConfig } from 'expo/config';
 import { palette } from '@precisari/design-tokens';
 
+/** Store build number (CI run number); must grow on every upload to App Store Connect / Play Console. */
+const buildNumber = Number(process.env.APP_BUILD_NUMBER ?? 1);
+
 const config: ExpoConfig = {
   name: 'Precisari',
   slug: 'precisari',
@@ -12,6 +15,7 @@ const config: ExpoConfig = {
   newArchEnabled: true,
   ios: {
     bundleIdentifier: 'br.com.precisari.app',
+    buildNumber: String(buildNumber),
     supportsTablet: false,
     config: { usesNonExemptEncryption: false },
     // Required-reason APIs used by React Native and Expo modules (Apple rejects uploads that omit them).
@@ -28,6 +32,7 @@ const config: ExpoConfig = {
   },
   android: {
     package: 'br.com.precisari.app',
+    versionCode: buildNumber,
     adaptiveIcon: { foregroundImage: './assets/adaptive-icon.png', backgroundColor: palette.ivory },
     edgeToEdgeEnabled: true,
     // Not used by the app: each one would have to be declared and justified in the Play Console.
