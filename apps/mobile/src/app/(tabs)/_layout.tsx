@@ -7,13 +7,19 @@ import { typography } from '@precisari/design-tokens';
 import { useSelectedProperty } from '@/lib/selected-property';
 import { useSession } from '@/lib/session';
 
+/** Onboarding is offered once per app session; "Configurar depois" lets the host into the app (App Review 2.1). */
+let onboardingOffered = false;
+
 export default function TabsLayout() {
   const { c, name } = useTheme();
   const { status } = useSession();
   const { properties, isLoading } = useSelectedProperty();
 
-  // New hosts go straight to onboarding (journey 4.1).
-  if (status === 'signedIn' && !isLoading && properties.length === 0) return <Redirect href="/onboarding" />;
+  // New hosts go straight to onboarding (journey 4.1), but can skip it.
+  if (status === 'signedIn' && !isLoading && properties.length === 0 && !onboardingOffered) {
+    onboardingOffered = true;
+    return <Redirect href="/onboarding" />;
+  }
 
   return (
     <Tabs

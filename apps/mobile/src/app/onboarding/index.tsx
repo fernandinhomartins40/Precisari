@@ -180,6 +180,7 @@ export default function Onboarding() {
       <Screen contentStyle={{ gap: space[5] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           {step > 1 || router.canGoBack() ? <BackHeader onBack={back} /> : <Logo width={120} />}
+          <Button small kind="ghost" label={t('onboarding.skip')} onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
         </View>
         <Progress step={step} />
 

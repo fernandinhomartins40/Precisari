@@ -6,6 +6,7 @@ import { useTheme } from '@/theme';
 import { monthName } from '@/lib/dates';
 import { useInsights } from '@/lib/hooks';
 import { useSelectedProperty } from '@/lib/selected-property';
+import { NoProperty } from '@/components/no-property';
 import { BarChart } from '@/components/bar-chart';
 import { CutBlock } from '@/components/blocks';
 import { ErrorState, Skeleton } from '@/components/feedback';
@@ -74,10 +75,12 @@ function MetricCard({ label, metric, current, previous, baseline }: { label: str
 
 export default function Results() {
   const { c, space } = useTheme();
-  const { property } = useSelectedProperty();
+  const { property, isLoading: propertiesLoading } = useSelectedProperty();
   const q = useInsights(property?.id);
   const d = q.data;
   const monthsShort = tList('months.short');
+
+  if (!property && !propertiesLoading) return <NoProperty />;
 
   return (
     <Screen refreshing={q.isRefetching} onRefresh={() => void q.refetch()} contentStyle={{ gap: space[5] }}>

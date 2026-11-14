@@ -76,7 +76,7 @@ export const ptBR = {
   },
   onboarding: {
     stepOf: 'Passo {step} de {total}',
-    skip: 'Pular',
+    skip: 'Configurar depois',
     ical: {
       title: 'Cole o link do calendário do seu anúncio',
       subtitle: 'Usamos só as datas ocupadas. Nada de senha do Airbnb.',
@@ -271,6 +271,8 @@ export const ptBR = {
     agoNow: 'agora',
     settings: 'Configurações do imóvel',
     empty: 'Nenhum imóvel ainda.',
+    emptyTitle: 'Cadastre seu primeiro imóvel',
+    emptyText: 'Com o link do calendário do seu anúncio, mostramos o preço certo para cada noite. Leva 2 minutos, quando você quiser.',
     planLimit: 'Seu plano permite {count} imóvel.',
   },
   airbnb: {

@@ -11,6 +11,7 @@ import { greeting } from '@/lib/greeting';
 import { useDecideAction, useMe, useNights, usePendingActions, useSyncProperty } from '@/lib/hooks';
 import { copyPrice, haptic } from '@/lib/platform';
 import { useSelectedProperty } from '@/lib/selected-property';
+import { NoProperty } from '@/components/no-property';
 import { SwipeCard, type SwipeCardHandle, type SwipeDirection } from '@/components/action-card';
 import { CutBlock, PropertyCard } from '@/components/blocks';
 import { ErrorState, Skeleton, Snackbar, type SnackbarState } from '@/components/feedback';
@@ -61,7 +62,7 @@ export default function Today() {
   const { c, radii, space } = useTheme();
   const qc = useQueryClient();
   const { data: me } = useMe();
-  const { property, properties } = useSelectedProperty();
+  const { property, isLoading: propertiesLoading, properties } = useSelectedProperty();
   const actionsQ = usePendingActions(property?.id);
   const nightsQ = useNights(property?.id, 90);
   const decide = useDecideAction();
@@ -123,6 +124,8 @@ export default function Today() {
   }, [property, sync, qc]);
 
   const openNight = (date: string) => property && router.push({ pathname: '/night/[date]', params: { date, propertyId: property.id } });
+
+  if (!property && !propertiesLoading) return <NoProperty />;
 
   return (
     <View style={{ flex: 1 }}>

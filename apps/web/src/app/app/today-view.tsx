@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CalendarDays, ChevronRight, PartyPopper, Plus, Keyboard, BedDouble } from 'lucide-react';
 import { formatBRL, type ActionDto } from '@precisari/shared';
@@ -27,7 +26,6 @@ function greeting(name: string): string {
 
 export function TodayView() {
   const user = useUser();
-  const router = useRouter();
   const toast = useToast();
   const { properties, property, isLoading: propsLoading } = useSelectedProperty();
   const actions = usePendingActions();
@@ -37,10 +35,6 @@ export function TodayView() {
 
   const today = todayIso(property?.timezone);
   const week = useNights(property?.id, today, addDays(today, 6));
-
-  useEffect(() => {
-    if (!propsLoading && properties.length === 0) router.replace('/app/imoveis/novo');
-  }, [propsLoading, properties.length, router]);
 
   const items = actions.data?.items ?? [];
   const current = items[0];

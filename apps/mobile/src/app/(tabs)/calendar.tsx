@@ -8,6 +8,7 @@ import { localIso } from '@/lib/dates';
 import { buildMonthGrids, type CalendarFilter } from '@/lib/heat-grid';
 import { useMe, useNights, usePendingActions, useSyncProperty } from '@/lib/hooks';
 import { useSelectedProperty } from '@/lib/selected-property';
+import { NoProperty } from '@/components/no-property';
 import { CutBlock } from '@/components/blocks';
 import { ErrorState, Skeleton } from '@/components/feedback';
 import { HeatLegend, HeatMonth } from '@/components/heat-map';
@@ -20,7 +21,7 @@ type Range = '90' | '180';
 export default function CalendarScreen() {
   const { c, space } = useTheme();
   const qc = useQueryClient();
-  const { property } = useSelectedProperty();
+  const { property, isLoading: propertiesLoading } = useSelectedProperty();
   const { data: me } = useMe();
   const isFree = me?.subscription.plan === 'FREE' && me.subscription.status !== 'TRIALING';
   const [range, setRange] = useState<Range>('90');
@@ -37,6 +38,8 @@ export default function CalendarScreen() {
   );
 
   const openNight = (date: string) => property && router.push({ pathname: '/night/[date]', params: { date, propertyId: property.id } });
+
+  if (!property && !propertiesLoading) return <NoProperty />;
 
   return (
     <Screen
