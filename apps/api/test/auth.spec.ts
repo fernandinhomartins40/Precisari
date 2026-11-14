@@ -69,6 +69,10 @@ describe('auth flow (integration)', () => {
     await request(ctx.http).post('/v1/auth/otp/request').send({ email: 'Review@Precisari.dev' }).expect(204);
     expect(ctx.emails.sent).toHaveLength(0);
     await request(ctx.http).post('/v1/auth/otp/verify').send({ email: 'review@precisari.dev', code: '246810' }).expect(200);
+    // Every listed address (case-insensitive) shares the code, e.g. a second account for screen recordings.
+    await request(ctx.http).post('/v1/auth/otp/request').send({ email: 'recording@precisari.dev' }).expect(204);
+    await request(ctx.http).post('/v1/auth/otp/verify').send({ email: 'recording@precisari.dev', code: '246810' }).expect(200);
+    expect(ctx.emails.sent).toHaveLength(0);
     // Another address cannot use the review code.
     await request(ctx.http).post('/v1/auth/otp/request').send({ email: 'other@precisari.dev' }).expect(204);
     await request(ctx.http).post('/v1/auth/otp/verify').send({ email: 'other@precisari.dev', code: '246810' }).expect(400);

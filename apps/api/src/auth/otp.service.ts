@@ -51,7 +51,7 @@ export class OtpService {
       this.logger.warn({ email: maskEmail(email) }, 'otp request limit reached; ignoring');
       return;
     }
-    const review = !!this.env.REVIEW_LOGIN_CODE && email === this.env.REVIEW_LOGIN_EMAIL;
+    const review = !!this.env.REVIEW_LOGIN_CODE && this.env.REVIEW_LOGIN_EMAIL.includes(email);
     const code = review ? this.env.REVIEW_LOGIN_CODE : randomOtpCode();
     const now = new Date();
     await this.prisma.$transaction([
